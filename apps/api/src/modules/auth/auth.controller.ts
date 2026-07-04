@@ -1,0 +1,87 @@
+import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Response } from 'express';
+import {
+  loginSchema,
+  registerSchema,
+  refreshSchema,
+  sendCodeSchema,
+  SendCodeDto,
+  RegisterDto,
+  LoginDto,
+  RefreshDto,
+} from '@letter/shared';
+import { AuthService, TokenPair } from './auth.service';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { Public } from '../../common/decorators/public.decorator';
+import { RateLimit } from '../../common/decorators/rate-limit.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly auth: AuthService) {}
+
+  @Public()
+  @RateLimit({ windowSec: 60, max: 3 })
+  @Post('code')
+  async sendCode(@Body(new ZodValidationPipe(sendCodeSchema)) dto: SendCodeDto): Promise<{ sent: boolean }> {
+    await this.auth.sendCode(dto);
+    return { sent: true };
+  }
+
+  @Public()
+  @RateLimit({ windowSec: 60, max: 5 })
+  @Post('register')
+  async register(@Body(new ZodValidationPipe(registerSchema)) dto: RegisterDto): Promise<{ userId: string }> {
+    return this.auth.register(dto);
+  }
+
+  @Public()
+  @RateLimit({ windowSec: 60, max: 10 })
+  @Post('login')
+  async login(
+    @Body(new ZodValidationPipe(loginSchema)) dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<TokenPair> {
+    const tokens = await this.auth.login(dto);
+    this.setAuthCookies(res, tokens);
+    return tokens;
+  }
+
+  @Public()
+  @Post('refresh')
+  async refresh(
+    @Body(new ZodValidationPipe(refreshSchema)) dto: RefreshDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<TokenPair> {
+    const tokens = await this.auth.refresh(dto.refreshToken);
+    this.setAuthCookies(res, tokens);
+    return tokens;
+  }
+
+  @Post('logout')
+  async logout(
+    @CurrentUser('userId') userId: bigint,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ ok: boolean }> {
+    await this.auth.logout(userId);
+    res.clearCookie('access_token');
+    res.clearCookie('refresh_token');
+    return { ok: true };
+  }
+
+  private setAuthCookies(res: Response, tokens: TokenPair): void {
+    const secure = process.env.NODE_ENV === 'production';
+    res.cookie('access_token', tokens.accessToken, {
+      httpOnly: true,
+      secure,
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refresh_token', tokens.refreshToken, {
+      httpOnly: true,
+      secure,
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+  }
+}

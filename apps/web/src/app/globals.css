@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-hand: 'Ma Shan Zheng';
+  --font-print: 'Noto Serif SC';
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-paper text-ink font-print antialiased;
+    overflow-x: hidden;
+    /* 极轻纸张纹理：暖光渐变叠加，opacity 很低，不影响对比度 */
+    background-image:
+      radial-gradient(1200px 600px at 50% -10%, rgba(232, 184, 109, 0.12), transparent 60%),
+      radial-gradient(800px 500px at 100% 110%, rgba(168, 69, 58, 0.04), transparent 60%);
+    background-attachment: fixed;
+    min-height: 100dvh;
+  }
+  ::selection {
+    background: rgba(232, 184, 109, 0.35);
+  }
+}
+
+@layer components {
+  /* 横线纹理：画在“文字层”上，背景随内容滚动(local)，确保字落在线上。 */
+  .ruled-bg {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--rule, 40px) - 1px),
+      rgba(192, 178, 150, 0.5) calc(var(--rule, 40px) - 1px),
+      rgba(192, 178, 150, 0.5) var(--rule, 40px)
+    );
+    background-attachment: local;
+  }
+
+  /* 正文阅读区：默认手写体；行高 = 横线间距，文字坐在线上(§3) */
+  .letter-body {
+    --rule: 40px;
+    @apply font-hand text-ink;
+    font-size: 19px;
+    line-height: var(--rule);
+    letter-spacing: 0.02em;
+    word-break: break-word;
+  }
+  .letter-body[data-font='print'] {
+    @apply font-print;
+    font-size: 18px;
+    letter-spacing: normal;
+  }
+  /* 段落间距取一整行，保持横线节奏；段首空两格 */
+  .letter-body p {
+    margin: 0 0 var(--rule) 0;
+    text-indent: 2em;
+  }
+  .letter-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 写信信纸 */
+  .writing-sheet {
+    --rule: 40px;
+  }
+  .writing-title {
+    @apply block w-full border-0 bg-transparent font-hand text-ink outline-none placeholder:text-ink2/55;
+    height: var(--rule);
+    line-height: var(--rule);
+    font-size: 23px;
+  }
+  .writing-area {
+    @apply block w-full resize-none border-0 bg-transparent font-hand text-ink outline-none placeholder:text-ink2/50;
+    font-size: 21px;
+    line-height: var(--rule);
+    letter-spacing: 0.02em;
+  }
+
+  /* 兼容旧用法 */
+  .paper-lines {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 39px,
+      rgba(192, 178, 150, 0.5) 39px,
+      rgba(192, 178, 150, 0.5) 40px
+    );
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3
+           font-ui text-[15px] font-medium transition-all duration-200 select-none
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-stamp text-paper shadow-soft hover:-translate-y-[1px] hover:shadow-paper;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3
+           font-ui text-[15px] font-medium transition-all duration-200 select-none
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-letter text-ink border border-line hover:-translate-y-[1px] hover:shadow-soft;
+  }
+  .field {
+    @apply w-full rounded-[10px] border border-line bg-letter px-4 py-3
+           font-ui text-[15px] text-ink placeholder:text-ink2/70
+           focus:outline-none focus:ring-2 focus:ring-glow/50;
+  }
+  .card {
+    @apply rounded-card bg-letter shadow-soft border border-line/70;
+  }
+}
+
+/* 尊重系统“减少动态效果” */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

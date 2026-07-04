@@ -1,0 +1,39 @@
+name: letter_community
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: letter-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: letter
+      POSTGRES_PASSWORD: letter_dev_pw
+      POSTGRES_DB: letter_community
+    ports:
+      - "5432:5432"
+    volumes:
+      - letter_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U letter -d letter_community"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: letter-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - letter_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  letter_pgdata:
+  letter_redisdata:

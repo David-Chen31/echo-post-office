@@ -1,0 +1,431 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+enum AccountType {
+  EMAIL
+  PHONE
+}
+
+enum UserStatus {
+  ACTIVE
+  WRITE_LIMITED
+  REPLY_LIMITED
+  BANNED
+  DELETED
+}
+
+enum UserLevel {
+  NEWCOMER
+  READER
+  REPLIER
+  KEEPER
+}
+
+enum LetterCategory {
+  STUDY
+  WORK
+  LOVE
+  FAMILY
+  FRIENDSHIP
+  GROWTH
+  LONELINESS
+  CONFUSION
+  REGRET
+  LIFE_STORY
+  JUST_TALK
+  OTHER
+}
+
+enum Mood {
+  CALM
+  SAD
+  ANXIOUS
+  TIRED
+  HOPEFUL
+  GRATEFUL
+  CONFUSED
+  OTHER
+}
+
+enum LetterStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_MODERATION
+  WAITING_CLAIM
+  CLAIMED
+  REPLIED
+  CLOSED
+  REJECTED
+}
+
+enum ClaimStatus {
+  CLAIMED
+  REPLIED
+  EXPIRED
+  RELEASED
+}
+
+enum ReplyStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_MODERATION
+  PUBLISHED
+  REJECTED
+}
+
+enum RiskLevel {
+  NONE
+  LOW
+  HIGH
+}
+
+enum ReplyFeedbackType {
+  UNDERSTOOD
+  SERIOUS
+  HELPFUL
+  AVERAGE
+  UNCOMFORTABLE
+}
+
+enum ReportTargetType {
+  LETTER
+  REPLY
+  USER
+}
+
+enum ReportReason {
+  HARASSMENT
+  ATTACK
+  PORN
+  AD_FRAUD
+  ASK_CONTACT
+  DANGEROUS_ADVICE
+  PRIVACY_LEAK
+  OTHER
+}
+
+enum ReportPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum ReportStatus {
+  PENDING
+  PROCESSING
+  RESOLVED
+  REJECTED
+}
+
+enum ModerationAction {
+  PASS
+  MASK_PASS
+  RETURN
+  REJECT
+  LIMIT
+  BAN
+  ESCALATE
+}
+
+enum SensitiveType {
+  PHONE
+  WECHAT
+  EMAIL
+  ADDRESS
+  ID_CARD
+  BANK
+  SCHOOL_CLASS
+  COMPANY
+  ABUSE
+  HATE
+  AD
+  FRAUD
+  SELF_HARM
+  VIOLENCE
+}
+
+enum NotificationType {
+  REPLY_RECEIVED
+  MODERATION_RESULT
+  CLAIM_EXPIRING
+  CONVERSATION_REQUEST
+  SYSTEM
+}
+
+enum ConversationStatus {
+  PENDING
+  ACTIVE
+  ENDED
+}
+
+enum ModTargetType {
+  LETTER
+  REPLY
+}
+
+// ---------- Account ----------
+model User {
+  id               BigInt      @id @default(autoincrement())
+  nickname         String      @db.VarChar(32)
+  accountType      AccountType
+  email            String?     @unique @db.VarChar(255)
+  phone            String?     @unique @db.VarChar(32)
+  passwordHash     String?     @db.VarChar(255)
+  status           UserStatus  @default(ACTIVE)
+  level            UserLevel   @default(NEWCOMER)
+  trustScore       Int         @default(100)
+  interestedTopics Json        @default("[]")
+  blockedTopics    Json        @default("[]")
+  dailyWriteQuota  Int         @default(1)
+  dailyClaimQuota  Int         @default(2)
+  isSeed           Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+  lastActiveAt     DateTime    @default(now())
+  deletedAt        DateTime?
+
+  letters       Letter[]        @relation("LetterAuthor")
+  claims        LetterClaim[]
+  replies       Reply[]
+  feedbacks     ReplyFeedback[]
+  reportsMade   Report[]        @relation("Reporter")
+  notifications Notification[]
+  blocksMade    UserBlock[]     @relation("Blocker")
+  blockedBy     UserBlock[]     @relation("Blocked")
+
+  @@index([status])
+  @@map("users")
+}
+
+model UserBlock {
+  id        BigInt   @id @default(autoincrement())
+  blockerId BigInt
+  blockedId BigInt
+  createdAt DateTime @default(now())
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id])
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id])
+
+  @@unique([blockerId, blockedId])
+  @@map("user_blocks")
+}
+
+// ---------- Letter ----------
+model Letter {
+  id              BigInt         @id @default(autoincrement())
+  authorId        BigInt
+  title           String?        @db.VarChar(60)
+  content         String         @db.Text
+  category        LetterCategory
+  mood            Mood?
+  replyPreference Json           @default("{}")
+  isPublic        Boolean        @default(false)
+  maxReplies      Int            @default(1)
+  status          LetterStatus   @default(SUBMITTED)
+  riskLevel       RiskLevel      @default(NONE)
+  createdAt       DateTime       @default(now())
+  publishedAt     DateTime?
+  closedAt        DateTime?
+
+  author  User          @relation("LetterAuthor", fields: [authorId], references: [id])
+  claims  LetterClaim[]
+  replies Reply[]
+
+  @@index([status, category])
+  @@index([authorId])
+  @@index([riskLevel])
+  @@map("letters")
+}
+
+model LetterDraft {
+  id        BigInt          @id @default(autoincrement())
+  userId    BigInt
+  title     String?         @db.VarChar(60)
+  content   String          @db.Text
+  category  LetterCategory?
+  mood      Mood?
+  updatedAt DateTime        @updatedAt
+
+  @@index([userId])
+  @@map("letter_drafts")
+}
+
+model LetterClaim {
+  id        BigInt      @id @default(autoincrement())
+  letterId  BigInt
+  readerId  BigInt
+  status    ClaimStatus @default(CLAIMED)
+  claimedAt DateTime    @default(now())
+  expiresAt DateTime
+
+  letter Letter @relation(fields: [letterId], references: [id])
+  reader User   @relation(fields: [readerId], references: [id])
+  reply  Reply?
+
+  @@unique([letterId, readerId])
+  @@index([status, expiresAt])
+  @@map("letter_claims")
+}
+
+model Reply {
+  id          BigInt      @id @default(autoincrement())
+  letterId    BigInt
+  claimId     BigInt      @unique
+  writerId    BigInt
+  content     String      @db.Text
+  status      ReplyStatus @default(SUBMITTED)
+  riskLevel   RiskLevel   @default(NONE)
+  isFavorited Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  publishedAt DateTime?
+
+  letter    Letter          @relation(fields: [letterId], references: [id])
+  claim     LetterClaim     @relation(fields: [claimId], references: [id])
+  writer    User            @relation(fields: [writerId], references: [id])
+  feedbacks ReplyFeedback[]
+
+  @@index([letterId])
+  @@index([writerId])
+  @@map("replies")
+}
+
+model ReplyFeedback {
+  id        BigInt            @id @default(autoincrement())
+  replyId   BigInt
+  raterId   BigInt
+  type      ReplyFeedbackType
+  createdAt DateTime          @default(now())
+
+  reply Reply @relation(fields: [replyId], references: [id])
+  rater User  @relation(fields: [raterId], references: [id])
+
+  @@unique([replyId, raterId])
+  @@map("reply_feedbacks")
+}
+
+// ---------- Conversation (P1) ----------
+model Conversation {
+  id             BigInt             @id @default(autoincrement())
+  userAId        BigInt
+  userBId        BigInt
+  sourceLetterId BigInt
+  status         ConversationStatus @default(PENDING)
+  createdAt      DateTime           @default(now())
+
+  @@index([userAId])
+  @@index([userBId])
+  @@map("conversations")
+}
+
+// ---------- Governance ----------
+model Report {
+  id          BigInt           @id @default(autoincrement())
+  reporterId  BigInt
+  targetType  ReportTargetType
+  targetId    BigInt
+  reason      ReportReason
+  description String?          @db.Text
+  priority    ReportPriority   @default(NORMAL)
+  status      ReportStatus     @default(PENDING)
+  handledById BigInt?
+  handledAt   DateTime?
+  createdAt   DateTime         @default(now())
+
+  reporter User @relation("Reporter", fields: [reporterId], references: [id])
+
+  @@index([status, priority])
+  @@index([targetType, targetId])
+  @@map("reports")
+}
+
+model ModerationRecord {
+  id         BigInt           @id @default(autoincrement())
+  targetType ModTargetType
+  targetId   BigInt
+  autoResult Json             @default("{}")
+  action     ModerationAction
+  operatorId BigInt?
+  note       String?          @db.Text
+  createdAt  DateTime         @default(now())
+
+  @@index([targetType, targetId])
+  @@map("moderation_records")
+}
+
+model SensitiveHit {
+  id         BigInt        @id @default(autoincrement())
+  targetType ModTargetType
+  targetId   BigInt
+  type       SensitiveType
+  matched    String        @db.VarChar(255)
+  startPos   Int?
+  endPos     Int?
+  masked     Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+
+  @@index([targetType, targetId])
+  @@map("sensitive_hits")
+}
+
+// ---------- System ----------
+model Notification {
+  id        BigInt           @id @default(autoincrement())
+  userId    BigInt
+  type      NotificationType
+  payload   Json             @default("{}")
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  operatorId BigInt
+  action     String   @db.VarChar(64)
+  targetType String   @db.VarChar(32)
+  targetId   BigInt
+  before     Json?
+  after      Json?
+  ip         String?  @db.VarChar(64)
+  createdAt  DateTime @default(now())
+
+  @@index([operatorId])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}
+
+model DailyStat {
+  id              BigInt   @id @default(autoincrement())
+  statDate        DateTime @db.Date
+  newUsers        Int      @default(0)
+  activeUsers     Int      @default(0)
+  newLetters      Int      @default(0)
+  repliedLetters  Int      @default(0)
+  pendingLetters  Int      @default(0)
+  avgWaitMinutes  Int      @default(0)
+  reportsCount    Int      @default(0)
+  highRiskCount   Int      @default(0)
+  replyCompletion Int      @default(0)
+  weeklyExchanges Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@unique([statDate])
+  @@map("daily_stats")
+}
+
+model ContentConfig {
+  key       String   @id @db.VarChar(64)
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("content_configs")
+}
