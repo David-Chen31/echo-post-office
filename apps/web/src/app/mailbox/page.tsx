@@ -56,7 +56,7 @@ export default function MailboxPage() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`whitespace-nowrap rounded-full px-3.5 py-1.5 font-ui text-[13px] transition-colors ${
-              tab === t.key ? 'bg-stamp text-paper' : 'bg-letter text-ink2 border border-line'
+              tab === t.key ? 'bg-stamp text-letter' : 'bg-letter text-ink2 border border-line'
             }`}
           >
             {t.label}

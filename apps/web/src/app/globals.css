@@ -15,6 +15,36 @@
   --font-hand: 'Ma Shan Zheng';
   /* 印刷体改用系统衬线（宋体族），不再联网加载 Noto Serif SC */
   --font-print: 'Songti SC', 'STSong', 'STSongti', 'SimSun', serif;
+
+  /* 白天令牌（RGB 通道，供 tailwind rgb(var / alpha)） */
+  --c-paper: 247 243 234;
+  --c-paper2: 239 233 220;
+  --c-letter: 251 248 241;
+  --c-ink: 58 48 38;
+  --c-ink2: 138 126 108;
+  --c-stamp: 168 69 58;
+  --c-glow: 232 184 109;
+  --c-line: 217 207 188;
+  --c-calm: 124 139 107;
+}
+
+/* 夜晚：画布转冷调靛蓝夜色、文字转浅；信纸仍是被台灯照亮的暖白 */
+:root[data-theme='night'] {
+  --c-paper: 18 21 33;
+  --c-paper2: 26 30 44;
+  --c-letter: 244 235 214;
+  --c-ink: 236 230 216;
+  --c-ink2: 165 158 141;
+  --c-line: 51 58 78;
+  --c-glow: 240 196 120;
+}
+
+/* 光岛复位：信纸 / 卡片 / 输入框等浅色面，夜里仍用白天的深墨文字与描边 */
+:root[data-theme='night'] :is(.bg-letter, .card, .field, .letter-body, .writing-sheet, .paper-grain) {
+  --c-ink: 58 48 38;
+  --c-ink2: 138 126 108;
+  --c-line: 217 207 188;
+  --c-paper2: 239 233 220;
 }
 
 @layer base {
@@ -30,6 +60,11 @@
       radial-gradient(800px 500px at 100% 110%, rgba(168, 69, 58, 0.04), transparent 60%);
     background-attachment: fixed;
     min-height: 100dvh;
+    transition: background-color 0.9s ease;
+  }
+  /* 夜里画布交给 SceneBackdrop 绘制真实夜景，去掉白天的暖光叠加 */
+  :root[data-theme='night'] body {
+    background-image: none;
   }
   ::selection {
     background: rgba(232, 184, 109, 0.35);
@@ -118,24 +153,6 @@
     caret-color: #6b4a2f;
   }
 
-  /* 写信氛围：昼 / 夜背景层，铺在信纸之后 */
-  .ambience {
-    position: fixed;
-    inset: 0;
-    z-index: -10;
-    pointer-events: none;
-    transition: opacity 0.9s ease;
-  }
-  .ambience-day {
-    background: radial-gradient(58% 40% at 50% 2%, rgba(232, 184, 109, 0.16), transparent 70%);
-  }
-  /* 夜：信纸上方一圈台灯暖光 + 四周渐暗 vignette + 深暖底色，营造独处夜写 */
-  .ambience-night {
-    background:
-      radial-gradient(46% 40% at 50% 24%, rgba(240, 196, 120, 0.22), transparent 60%),
-      radial-gradient(120% 115% at 50% 42%, transparent 38%, rgba(24, 18, 13, 0.62) 100%),
-      linear-gradient(180deg, #241d17 0%, #2b2119 100%);
-  }
   /* 落笔时钢笔墨尖的轻微律动 */
   .pen-writing {
     animation: nib 0.6s ease-out;
@@ -156,7 +173,7 @@
     @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3
            font-ui text-[15px] font-medium transition-all duration-200 select-none
            disabled:opacity-50 disabled:cursor-not-allowed
-           bg-stamp text-paper shadow-soft hover:-translate-y-[1px] hover:shadow-paper;
+           bg-stamp text-letter shadow-soft hover:-translate-y-[1px] hover:shadow-paper;
   }
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3
@@ -183,6 +200,16 @@
   }
   100% {
     transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
   }
 }
 

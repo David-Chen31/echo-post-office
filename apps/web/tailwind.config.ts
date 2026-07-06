@@ -6,16 +6,17 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
+      // 令牌走 CSS 变量：昼/夜切换只改 globals.css 里的变量（§一 全站主题）
       colors: {
-        paper: '#F7F3EA', // 主背景 米白纸色
-        paper2: '#EFE9DC', // 次背景 浅米灰
-        letter: '#FBF8F1', // 信纸面
-        ink: '#3A3026', // 正文墨褐
-        ink2: '#8A7E6C', // 次要文字 淡墨
-        stamp: '#A8453A', // 邮戳/强调 暗红
-        glow: '#E8B86D', // 暖光
-        line: '#D9CFBC', // 分隔/描边
-        calm: '#7C8B6B', // 平和 苔绿
+        paper: 'rgb(var(--c-paper) / <alpha-value>)', // 主背景（画布，昼夜翻转）
+        paper2: 'rgb(var(--c-paper2) / <alpha-value>)', // 次背景
+        letter: 'rgb(var(--c-letter) / <alpha-value>)', // 信纸面（始终被照亮的暖白）
+        ink: 'rgb(var(--c-ink) / <alpha-value>)', // 正文墨褐（画布上夜里转浅）
+        ink2: 'rgb(var(--c-ink2) / <alpha-value>)', // 次要文字
+        stamp: 'rgb(var(--c-stamp) / <alpha-value>)', // 邮戳/强调 暗红
+        glow: 'rgb(var(--c-glow) / <alpha-value>)', // 暖光
+        line: 'rgb(var(--c-line) / <alpha-value>)', // 分隔/描边
+        calm: 'rgb(var(--c-calm) / <alpha-value>)', // 平和 苔绿
       },
       fontFamily: {
         hand: ['var(--font-hand)', '"Ma Shan Zheng"', 'cursive'],

@@ -71,7 +71,7 @@ export default function ModerationQueue() {
             key={t}
             onClick={() => setTab(t)}
             className={`rounded-full px-3.5 py-1.5 font-ui text-[13px] ${
-              tab === t ? 'bg-stamp text-paper' : 'border border-line bg-letter text-ink2'
+              tab === t ? 'bg-stamp text-letter' : 'border border-line bg-letter text-ink2'
             }`}
           >
             {t === 'letters' ? '待审信件' : '待审回信'}

@@ -78,7 +78,7 @@ function AuthInner() {
             key={m}
             onClick={() => setMode(m)}
             className={`flex-1 rounded-full py-1.5 transition-colors ${
-              mode === m ? 'bg-stamp text-paper' : 'text-ink2'
+              mode === m ? 'bg-stamp text-letter' : 'text-ink2'
             }`}
           >
             {m === 'login' ? '登录' : '注册'}

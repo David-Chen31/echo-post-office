@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useAuth';
 import { BackHeader, Spinner, Toast } from '@/components/ui';
-import { WritingAmbience } from '@/components/WritingAmbience';
 import { Pen } from '@/components/Pen';
 
 const PROMPTS = [
@@ -162,7 +161,6 @@ export default function WritePage() {
 
   return (
     <main className="relative left-1/2 w-screen -translate-x-1/2 pb-28">
-      <WritingAmbience />
       <div className="mx-auto w-full max-w-[820px] px-5">
         <BackHeader title="写一封信" right={savedAt ? <span className="font-ui text-[11px] text-ink2">已存 {savedAt}</span> : null} />
 

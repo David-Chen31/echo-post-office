@@ -113,7 +113,7 @@ export default function ReceivedPage() {
                   disabled={!!gave}
                   className={`rounded-full border px-3 py-1.5 font-ui text-[13px] transition-colors ${
                     gave === f.type
-                      ? 'border-stamp bg-stamp text-paper'
+                      ? 'border-stamp bg-stamp text-letter'
                       : 'border-line bg-letter text-ink2 hover:text-ink disabled:opacity-50'
                   }`}
                 >

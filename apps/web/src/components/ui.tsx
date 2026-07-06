@@ -36,7 +36,7 @@ export function Toast({ message }: { message: string | null }) {
   if (!message) return null;
   return (
     <div className="fixed inset-x-0 bottom-24 z-30 flex justify-center px-6">
-      <div className="animate-fade-up rounded-full bg-ink/90 px-4 py-2 font-ui text-[13px] text-paper shadow-soft">
+      <div className="animate-fade-up rounded-full bg-[#2a2620]/92 px-4 py-2 font-ui text-[13px] text-[#f7f3ea] shadow-soft">
         {message}
       </div>
     </div>
