@@ -80,7 +80,7 @@ function Foyer() {
           className="mt-12 w-full max-w-[300px]"
         >
           <Link href="/auth" className="btn-primary w-full py-4 text-[16px]">
-            进来，写一封信
+            坐下来，写一封信吧
           </Link>
           <p className="mt-5 font-ui text-[13px] text-ink2">
             已有账号？
@@ -107,7 +107,7 @@ function Foyer() {
       )}
 
       <footer className="pb-10 text-center font-ui text-[12px] text-ink2">
-        <p>这里不鼓励快速聊天，只鼓励认真写信。</p>
+        <p>这里没有匆忙的聊天，只有慢慢写下的信。</p>
         <Link href="/rules" className="mt-2 inline-block underline-offset-4 hover:underline">
           社区约定
         </Link>

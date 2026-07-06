@@ -25,7 +25,7 @@ function DraftItem({ draft }: { draft: Draft }) {
   };
   return (
     <button onClick={open} className="card block w-full p-4 text-left hover:shadow-paper">
-      <span className="font-hand text-[18px] text-ink">{draft.title || '未寄出的信'}</span>
+      <span className="font-hand text-[18px] text-ink">{draft.title || '还没写完的信'}</span>
       <p className="mt-1 line-clamp-2 font-print text-[14px] text-ink2">{draft.content}</p>
       <p className="mt-2 font-ui text-[12px] text-stamp">继续写 →</p>
     </button>
@@ -131,8 +131,8 @@ function renderList(tab: Tab, data: unknown[]) {
     return (data as ReplyingItem[]).map((c) => (
       <Link key={c.claimId} href={`/reply?claim=${c.claimId}`} className="card block p-4 hover:shadow-paper">
         <div className="flex items-center justify-between font-ui text-[12px] text-ink2">
-          <span>{c.letterTitle || '待回信件'}</span>
-          <span>剩余时间至 {new Date(c.expiresAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+          <span>{c.letterTitle || '一封等你回的信'}</span>
+          <span>记得在 {new Date(c.expiresAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 前回信</span>
         </div>
         <p className="mt-2 line-clamp-2 font-print text-[14px] text-ink2">{c.content}</p>
         <p className="mt-2 font-ui text-[12px] text-stamp">继续写回信 →</p>
@@ -143,7 +143,7 @@ function renderList(tab: Tab, data: unknown[]) {
     return (data as SentLetter[]).map((l) => (
       <div key={l.letterId} className="card p-4">
         <div className="flex items-center justify-between">
-          <span className="font-hand text-[18px] text-ink">{l.title || '无标题的信'}</span>
+          <span className="font-hand text-[18px] text-ink">{l.title || '你寄出的一封信'}</span>
           <span className="rounded-full bg-paper2 px-2.5 py-1 font-ui text-[12px] text-ink2">
             {LETTER_STATUS_LABELS[l.status] ?? l.status}
           </span>

@@ -121,7 +121,7 @@ export default function ReadPage() {
           </LetterPaper>
 
           <p className="mt-5 text-center font-ui text-[12px] text-ink2">
-            如果你愿意认真回应这封信，就领取它。领取后请在 24 小时内完成回信。
+            如果你愿意认真回应这封信，就把它留下吧。之后的 24 小时里，慢慢写完回信就好。
           </p>
 
           <div className="mt-4 flex gap-3">

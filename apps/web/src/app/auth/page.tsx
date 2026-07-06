@@ -31,7 +31,7 @@ function AuthInner() {
     setSending(true);
     try {
       await api.post('/auth/code', { target: email, scene: mode });
-      notify('验证码已发送（开发环境请看后端控制台）');
+      notify('验证码已经寄到你的邮箱，请查收');
       setCountdown(60);
       const t = setInterval(() => setCountdown((c) => (c <= 1 ? (clearInterval(t), 0) : c - 1)), 1000);
     } catch (e) {
@@ -64,8 +64,8 @@ function AuthInner() {
     <main className="pb-16">
       <BackHeader title="登录 / 注册" />
       <div className="mt-8 text-center">
-        <p className="font-hand text-[26px] text-ink">推开门，先在门口登记一下</p>
-        <p className="mt-2 font-ui text-[13px] text-ink2">匿名书信，只需要一个邮箱。这里没有点赞，只有信。</p>
+        <p className="font-hand text-[26px] text-ink">轻轻推开门，这里为你留着灯</p>
+        <p className="mt-2 font-ui text-[13px] text-ink2">匿名写信，只需要一个邮箱。这里没有点赞，只有信。</p>
       </div>
 
       <div className="mx-auto mt-8 flex w-full max-w-[200px] rounded-full border border-line bg-letter p-1 font-ui text-[14px]">
@@ -114,7 +114,7 @@ function AuthInner() {
           </button>
         </div>
         <button className="btn-primary mt-2 w-full py-3.5" disabled={submitting} onClick={submit}>
-          {mode === 'login' ? '进入邮局' : '注册'}
+          {mode === 'login' ? '进入邮局' : '注册，进来'}
         </button>
       </div>
 

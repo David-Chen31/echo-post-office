@@ -74,7 +74,7 @@ function ReplyInner() {
           <p className="font-hand text-[24px] leading-relaxed text-ink">
             {done === 'published'
               ? '你的回信已经寄出。\n谢谢你，愿意认真读完一个陌生人的心事。'
-              : '你的回信正在被认真核对，\n通过后会送到对方的信箱。'}
+              : '你的回信我们会先轻轻看过，\n随后就送到对方的信箱里。'}
           </p>
           <div className="mt-8 flex flex-col gap-3">
             <button onClick={() => router.push('/read')} className="btn-primary w-full py-3.5">
@@ -94,8 +94,8 @@ function ReplyInner() {
     return (
       <main>
         <BackHeader title="回信" />
-        <p className="mt-16 text-center font-hand text-[20px] text-ink">这封信不在你的回信列表里</p>
-        <p className="mt-2 text-center font-ui text-[13px] text-ink2">也许领取已超时，信件已回到待领取池</p>
+        <p className="mt-16 text-center font-hand text-[20px] text-ink">这封信，暂时不在你的信箱里了</p>
+        <p className="mt-2 text-center font-ui text-[13px] text-ink2">也许时间悄悄过了，它已经回到信箱，静静等着下一个人</p>
         <button onClick={() => router.push('/read')} className="btn-ghost mx-auto mt-6 block">
           去读别的信
         </button>

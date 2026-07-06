@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useAuth';
+import { LEVEL_LABELS } from '@/lib/labels';
 import { BackHeader, Spinner, Toast } from '@/components/ui';
 import { BottomNav } from '@/components/BottomNav';
 
@@ -76,10 +77,13 @@ export default function SettingsPage() {
         {/* 信誉：更温柔的呈现 */}
         <div className="font-ui text-[13px] leading-relaxed text-ink2">
           <p>
-            你是这里的 <span className="font-hand text-[17px] text-ink">{profile.level}</span>，
-            信任分 {profile.trustScore}。
+            在这里，你是{' '}
+            <span className="font-hand text-[17px] text-ink">
+              {LEVEL_LABELS[profile.level] ?? profile.level}
+            </span>
+            。
           </p>
-          <p className="mt-1">每天可以寄出 {profile.dailyWriteQuota} 封信、取回 {profile.dailyClaimQuota} 封来信。</p>
+          <p className="mt-1">每天，你可以寄出 {profile.dailyWriteQuota} 封信，也可以取回 {profile.dailyClaimQuota} 封来信慢慢读。</p>
         </div>
 
         <div className="flex flex-col gap-3 border-t border-line/60 pt-6">

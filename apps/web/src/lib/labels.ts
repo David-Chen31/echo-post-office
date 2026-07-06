@@ -26,6 +26,14 @@ export const MOOD_LABELS: Record<string, string> = {
   [Mood.OTHER]: '说不清',
 };
 
+// 用户等级：给一套温柔的中文称呼，避免把原始枚举（NEWCOMER…）直接摊给用户
+export const LEVEL_LABELS: Record<string, string> = {
+  NEWCOMER: '刚来的人',
+  READER: '愿意读信的人',
+  REPLIER: '会认真回信的人',
+  KEEPER: '守着这间邮局的人',
+};
+
 export const LETTER_STATUS_LABELS: Record<string, string> = {
   SUBMITTED: '已投递',
   UNDER_MODERATION: '审核中',
