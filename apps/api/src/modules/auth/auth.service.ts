@@ -91,7 +91,11 @@ export class AuthService {
       where: { id: user.id },
       data: { lastActiveAt: new Date() },
     });
-    return this.issueTokens(user.id, 'user');
+    return this.issueTokens(user.id, this.normalizeRole(user.role));
+  }
+
+  private normalizeRole(role: string): AppRole {
+    return role === 'admin' || role === 'moderator' ? role : 'user';
   }
 
   async refresh(refreshToken: string): Promise<TokenPair> {

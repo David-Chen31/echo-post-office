@@ -16,6 +16,9 @@ const PROMPTS = [
 
 // 客户端轻量敏感信息预检（仅提示，最终以服务端为准）
 const CONTACT_RE = /(1[3-9]\d{9})|(微信|vx|wechat|qq)\s*[:：]?\s*[a-zA-Z0-9_-]{5,}/i;
+// 自伤/危机词：命中时给温和的紧急求助提示（非诊断、非阻断）
+const CRISIS_WORDS = ['自杀', '轻生', '不想活', '想死', '结束生命', '自残', '活不下去'];
+const hasCrisis = (t: string) => CRISIS_WORDS.some((w) => t.includes(w));
 
 export default function WritePage() {
   const router = useRouter();
@@ -30,8 +33,18 @@ export default function WritePage() {
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [prompt] = useState(() => PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
+  const [crisisText, setCrisisText] = useState('');
+  const [showCrisis, setShowCrisis] = useState(false);
+  const crisisAck = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
   const areaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    api
+      .get<{ value: string }>('/configs/emergency.notice')
+      .then((r) => setCrisisText(r.value))
+      .catch(() => setCrisisText('如果你正处在危险或极度痛苦中，请立即联系现实中可信任的人或当地紧急服务。本平台不能替代专业帮助。'));
+  }, []);
 
   // Tab：段首空两格（插入两个全角空格）
   const handleTab = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -94,6 +107,11 @@ export default function WritePage() {
     if (content.trim().length < 50) return notify('再多写一点点吧，至少 50 字，让对方更懂你');
     if (CONTACT_RE.test(content)) {
       notify('为保护你和对方，请不要在信中留下联系方式');
+      return;
+    }
+    // 命中危机词：先弹温和求助提示（不阻断，可继续寄出）
+    if (hasCrisis(content) && !crisisAck.current) {
+      setShowCrisis(true);
       return;
     }
     setSubmitting(true);
@@ -183,6 +201,30 @@ export default function WritePage() {
         </div>
       </div>
       <Toast message={toast} />
+
+      {showCrisis && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 px-6">
+          <div className="w-full max-w-[420px] rounded-card bg-letter p-6 shadow-paper">
+            <p className="font-hand text-[22px] text-ink">你并不孤单</p>
+            <p className="mt-3 font-print text-[14.5px] leading-relaxed text-ink">{crisisText}</p>
+            <div className="mt-6 flex flex-col gap-2">
+              <button
+                className="btn-primary w-full py-3"
+                onClick={() => {
+                  crisisAck.current = true;
+                  setShowCrisis(false);
+                  void submit();
+                }}
+              >
+                我明白了，仍然寄出这封信
+              </button>
+              <button className="btn-ghost w-full py-3" onClick={() => setShowCrisis(false)}>
+                先停一下
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -6,6 +6,7 @@ import { BusinessException } from '../../common/errors/business.exception';
 export interface ProfileView {
   userId: string;
   nickname: string;
+  role: string;
   level: string;
   trustScore: number;
   interestedTopics: string[];
@@ -26,6 +27,7 @@ export class UserService {
     return {
       userId: user.id.toString(),
       nickname: user.nickname,
+      role: user.role,
       level: user.level,
       trustScore: user.trustScore,
       interestedTopics: user.interestedTopics as string[],

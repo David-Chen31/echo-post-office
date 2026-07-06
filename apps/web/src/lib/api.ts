@@ -55,6 +55,7 @@ export const api = {
 export interface Profile {
   userId: string;
   nickname: string;
+  role: string;
   level: string;
   trustScore: number;
   interestedTopics: string[];

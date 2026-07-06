@@ -22,6 +22,7 @@ import { ReplyModule } from './modules/reply/reply.module';
 import { MailboxModule } from './modules/mailbox/mailbox.module';
 import { ReportModule } from './modules/report/report.module';
 import { ContentModule } from './modules/content/content.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { WorkerModule } from './modules/worker/worker.module';
 
 @Module({
@@ -44,6 +45,7 @@ import { WorkerModule } from './modules/worker/worker.module';
     MailboxModule,
     ReportModule,
     ContentModule,
+    AdminModule,
     WorkerModule,
   ],
   providers: [

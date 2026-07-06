@@ -179,6 +179,7 @@ model User {
   phone            String?     @unique @db.VarChar(32)
   passwordHash     String?     @db.VarChar(255)
   status           UserStatus  @default(ACTIVE)
+  role             String      @default("user") // user | moderator | admin (与 AppRole 对齐)
   level            UserLevel   @default(NEWCOMER)
   trustScore       Int         @default(100)
   interestedTopics Json        @default("[]")
