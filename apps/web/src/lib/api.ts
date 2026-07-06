@@ -16,7 +16,9 @@ export class ApiError extends Error {
   }
 }
 
-const BASE = '/api/v1';
+// 同源部署留空 → 走 next rewrites 的 /api 代理；跨源部署（如 GitHub Pages）
+// 设 NEXT_PUBLIC_API_BASE=https://your-backend 指向后端绝对地址。
+const BASE = (process.env.NEXT_PUBLIC_API_BASE || '') + '/api/v1';
 
 async function request<T>(method: string, path: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
   const res = await fetch(BASE + path, {
