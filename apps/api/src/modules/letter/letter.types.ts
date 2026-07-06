@@ -30,7 +30,10 @@ export interface LetterOwnerView {
 export interface LetterReaderView {
   letterId: string;
   title: string | null;
+  salutation: string | null;
   content: string;
+  signature: string | null;
+  signedDate: string | null;
   category: string;
   mood: string | null;
   fuzzyTime: string;
@@ -54,7 +57,10 @@ export function toReaderView(l: Letter): LetterReaderView {
   return {
     letterId: l.id.toString(),
     title: l.title,
+    salutation: l.salutation,
     content: l.content,
+    signature: l.signature,
+    signedDate: l.signedDate,
     category: l.category,
     mood: l.mood,
     fuzzyTime: fuzzyTime(l.publishedAt ?? l.createdAt),

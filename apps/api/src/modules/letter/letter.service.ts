@@ -11,6 +11,7 @@ import {
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { RedisService } from '../../infra/redis/redis.service';
 import { ModerationService } from '../moderation/moderation.service';
+import { detectAll, maskContent } from '../moderation/detectors';
 import { BusinessException } from '../../common/errors/business.exception';
 import { dayStamp, secondsUntilEndOfDay } from '../../common/utils/quota';
 import { LetterEvent, LetterOwnerView, toOwnerView } from './letter.types';
@@ -58,10 +59,20 @@ export class LetterService {
     if (idemKey) await this.assertIdempotent(userId, idemKey);
     await this.assertWriteQuota(userId);
 
+    // 称谓 / 署名为短文本，同样遮挡其中的联系方式，防止绕过正文检测留联系方式。
+    const maskShort = (s?: string): string | null => {
+      const v = s?.trim();
+      if (!v) return null;
+      return maskContent(v, detectAll(v));
+    };
+
     const letter = await this.prisma.letter.create({
       data: {
         authorId: userId,
         title: dto.title ?? null,
+        salutation: maskShort(dto.salutation),
+        signature: maskShort(dto.signature),
+        signedDate: dto.signedDate?.trim() || null,
         content: dto.content,
         category: dto.category,
         mood: dto.mood ?? null,

@@ -221,7 +221,10 @@ model Letter {
   id              BigInt         @id @default(autoincrement())
   authorId        BigInt
   title           String?        @db.VarChar(60)
+  salutation      String?        @db.VarChar(40)
   content         String         @db.Text
+  signature       String?        @db.VarChar(40)
+  signedDate      String?        @db.VarChar(40)
   category        LetterCategory
   mood            Mood?
   replyPreference Json           @default("{}")

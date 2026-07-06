@@ -57,6 +57,10 @@ export type LetterDraftDto = z.infer<typeof letterDraftSchema>;
 
 export const submitLetterSchema = z.object({
   title: z.string().max(LIMITS.TITLE_MAX_LENGTH).optional(),
+  // 用户自定义的称谓 / 署名 / 日期（书信仪式，均可空、短文本）
+  salutation: z.string().max(40).optional(),
+  signature: z.string().max(40).optional(),
+  signedDate: z.string().max(40).optional(),
   content: z.string().min(LIMITS.LETTER_MIN_LENGTH).max(LIMITS.LETTER_MAX_LENGTH),
   // 决策 A：前端不再让用户选主题；省略时后端按“只是想说说”兜底。
   category: z.nativeEnum(LetterCategory).default(LetterCategory.JUST_TALK),

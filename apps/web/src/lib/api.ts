@@ -67,7 +67,10 @@ export interface Profile {
 export interface LetterReader {
   letterId: string;
   title: string | null;
+  salutation: string | null;
   content: string;
+  signature: string | null;
+  signedDate: string | null;
   category: string;
   mood: string | null;
   fuzzyTime: string;

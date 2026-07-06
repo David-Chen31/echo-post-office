@@ -18,11 +18,32 @@ const CONTACT_RE = /(1[3-9]\d{9})|(微信|vx|wechat|qq)\s*[:：]?\s*[a-zA-Z0-9_-
 const CRISIS_WORDS = ['自杀', '轻生', '不想活', '想死', '结束生命', '自残', '活不下去'];
 const hasCrisis = (t: string) => CRISIS_WORDS.some((w) => t.includes(w));
 
+// 中文日期：二〇二六年七月六日
+const CN_DIGITS = '〇一二三四五六七八九';
+const cnUnder = (n: number) => ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][n];
+function cnNum(n: number): string {
+  if (n <= 10) return cnUnder(n);
+  if (n < 20) return '十' + (n % 10 ? cnUnder(n % 10) : '');
+  const t = Math.floor(n / 10);
+  return cnUnder(t) + '十' + (n % 10 ? cnUnder(n % 10) : '');
+}
+function todayCn(): string {
+  const d = new Date();
+  const y = String(d.getFullYear())
+    .split('')
+    .map((c) => CN_DIGITS[+c])
+    .join('');
+  return `${y}年${cnNum(d.getMonth() + 1)}月${cnNum(d.getDate())}日`;
+}
+
 export default function WritePage() {
   const router = useRouter();
   const { profile, loading } = useRequireAuth();
 
   const [content, setContent] = useState('');
+  const [salutation, setSalutation] = useState('致 一位素未谋面的你');
+  const [signature, setSignature] = useState('一个给你写信的人');
+  const [dateText, setDateText] = useState(() => todayCn());
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -60,25 +81,28 @@ export default function WritePage() {
     setTimeout(() => setToast(null), 2400);
   };
 
-  // 本地草稿恢复（只留正文——决策 A 不再有标题/主题/心情）
+  // 本地草稿恢复（正文 + 称谓 / 署名 / 日期）
   useEffect(() => {
     const d = localStorage.getItem('letter-draft');
     if (d) {
       try {
         const p = JSON.parse(d);
         setContent(p.content || '');
+        if (typeof p.salutation === 'string') setSalutation(p.salutation);
+        if (typeof p.signature === 'string') setSignature(p.signature);
+        if (typeof p.dateText === 'string') setDateText(p.dateText);
       } catch {
         /* ignore */
       }
     }
   }, []);
 
-  // 防抖自动保存（本地 + 服务端兜底）
+  // 防抖自动保存（本地全量 + 服务端仅正文兜底）
   useEffect(() => {
     if (!content.trim()) return;
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      localStorage.setItem('letter-draft', JSON.stringify({ content }));
+      localStorage.setItem('letter-draft', JSON.stringify({ content, salutation, signature, dateText }));
       try {
         await api.post('/letters/draft', { content });
         setSavedAt(new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }));
@@ -87,11 +111,12 @@ export default function WritePage() {
       }
     }, 1200);
     return () => clearTimeout(saveTimer.current);
-  }, [content]);
+  }, [content, salutation, signature, dateText]);
 
   const submit = async () => {
     if (content.trim().length < 50) return notify('再多写一点点吧，至少 50 字，让对方更懂你');
-    if (CONTACT_RE.test(content)) {
+    // 称谓 / 署名一并做联系方式预检，避免绕过正文留联系方式
+    if (CONTACT_RE.test(`${salutation}\n${content}\n${signature}`)) {
       notify('为保护你和对方，请不要在信中留下联系方式');
       return;
     }
@@ -102,7 +127,16 @@ export default function WritePage() {
     }
     setSubmitting(true);
     try {
-      await api.post('/letters', { content }, { 'Idempotency-Key': crypto.randomUUID() });
+      await api.post(
+        '/letters',
+        {
+          content,
+          salutation: salutation.trim() || undefined,
+          signature: signature.trim() || undefined,
+          signedDate: dateText.trim() || undefined,
+        },
+        { 'Idempotency-Key': crypto.randomUUID() },
+      );
       localStorage.removeItem('letter-draft');
       router.push('/write/sent');
     } catch (e) {
@@ -120,19 +154,38 @@ export default function WritePage() {
       <div className="mx-auto w-full max-w-[820px] px-5">
         <BackHeader title="写一封信" right={savedAt ? <span className="font-ui text-[11px] text-ink2">已存 {savedAt}</span> : null} />
 
-        {/* 信纸编辑区：抬头 → 连续横线正文 → 落款，落在同一套线上 */}
+        {/* 信纸编辑区：抬头 → 连续横线正文 → 落款 / 日期，均可自行书写 */}
         <div className="writing-sheet card paper-grain mt-4 px-7 py-6 sm:px-9">
-          <p className="writing-salutation">致 一位素未谋面的你</p>
+          <input
+            className="writing-salutation w-full border-0 bg-transparent outline-none placeholder:text-ink2/45"
+            placeholder="致 …（写给谁？陌生人 / 某个名字 / 未来的我）"
+            maxLength={40}
+            value={salutation}
+            onChange={(e) => setSalutation(e.target.value)}
+          />
           <textarea
             ref={areaRef}
-            className="writing-area ruled-bg min-h-[56vh]"
+            className="writing-area ruled-bg min-h-[52vh]"
             placeholder={`　　此刻，你想说点什么……\n\n（不知道从哪写起？${prompt}）\n（提示：按 Tab 键可在段首空两格）`}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleTab}
             autoFocus
           />
-          <p className="writing-signature">—— 一个给你写信的人</p>
+          <input
+            className="writing-signature w-full border-0 bg-transparent text-right outline-none placeholder:text-ink2/45"
+            placeholder="—— 署名（一个不必真实的名字）"
+            maxLength={40}
+            value={signature}
+            onChange={(e) => setSignature(e.target.value)}
+          />
+          <input
+            className="writing-signature w-full border-0 bg-transparent text-right text-[15px] opacity-80 outline-none placeholder:text-ink2/45"
+            placeholder="日期"
+            maxLength={40}
+            value={dateText}
+            onChange={(e) => setDateText(e.target.value)}
+          />
         </div>
 
         {/* 只留一行字数提示 */}

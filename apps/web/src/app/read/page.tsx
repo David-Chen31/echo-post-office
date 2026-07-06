@@ -98,8 +98,22 @@ export default function ReadPage() {
           {letter.title && <h2 className="mb-2 font-hand text-[22px] text-ink">{letter.title}</h2>}
 
           <LetterPaper font={font}>
-            <p className="text-ink2" style={{ textIndent: 0 }}>见信如晤，</p>
+            {letter.salutation && (
+              <p className="text-ink2" style={{ textIndent: 0 }}>
+                {letter.salutation}
+              </p>
+            )}
             <LetterText text={letter.content} />
+            {(letter.signature || letter.signedDate) && (
+              <div className="mt-4 text-right text-ink2">
+                {letter.signature && <p style={{ textIndent: 0 }}>—— {letter.signature}</p>}
+                {letter.signedDate && (
+                  <p className="text-[15px]" style={{ textIndent: 0 }}>
+                    {letter.signedDate}
+                  </p>
+                )}
+              </div>
+            )}
           </LetterPaper>
 
           <p className="mt-5 text-center font-ui text-[12px] text-ink2">
