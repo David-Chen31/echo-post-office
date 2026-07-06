@@ -1,7 +1,7 @@
 'use client';
 
-import { KeyboardEvent, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { KeyboardEvent, Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { api, ApiError, ReplyingItem } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useAuth';
@@ -10,9 +10,9 @@ import { FontToggle } from '@/components/FontToggle';
 import { useReadingFont } from '@/lib/useReadingFont';
 import { BackHeader, Spinner, Toast } from '@/components/ui';
 
-export default function ReplyPage() {
+function ReplyInner() {
   const router = useRouter();
-  const { claimId } = useParams<{ claimId: string }>();
+  const claimId = useSearchParams().get('claim') ?? '';
   const { profile, loading: authLoading } = useRequireAuth();
   const { font, toggle } = useReadingFont();
 
@@ -160,5 +160,13 @@ export default function ReplyPage() {
       </div>
       <Toast message={toast} />
     </main>
+  );
+}
+
+export default function ReplyPage() {
+  return (
+    <Suspense fallback={<Spinner label="正在打开这封信…" />}>
+      <ReplyInner />
+    </Suspense>
   );
 }

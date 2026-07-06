@@ -20,7 +20,13 @@ async function bootstrap(): Promise<void> {
   // 信任反向代理（Next 代理 / 生产网关）转发的 X-Forwarded-For，使 req.ip 为真实客户端 IP，限流才不会串号。
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.use(cookieParser());
-  app.enableCors({ origin: true, credentials: true });
+  // 跨源部署时用 CORS_ORIGIN 白名单（逗号分隔，如 https://user.github.io）；
+  // 未设置则反射请求 Origin（本地/同源开发方便）。credentials 必开以携带 cookie。
+  const corsOrigin = config.get<string>('CORS_ORIGIN');
+  app.enableCors({
+    origin: corsOrigin ? corsOrigin.split(',').map((s) => s.trim()) : true,
+    credentials: true,
+  });
 
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());

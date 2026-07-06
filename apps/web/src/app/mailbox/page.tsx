@@ -110,7 +110,7 @@ function renderList(tab: Tab, data: unknown[]) {
   if (tab === 'received' || tab === 'favorites') {
     // 一封信呈现为一枚躺在桌上、尚未拆开的信封（含邮票 / 封盖 / 模糊日期），点开才展信
     return (data as ReceivedReply[]).map((r) => (
-      <Link key={r.replyId} href={`/mailbox/received/${r.replyId}`} className="block">
+      <Link key={r.replyId} href={`/mailbox/received?id=${r.replyId}`} className="block">
         <div className="relative overflow-hidden rounded-[12px] border border-line bg-letter paper-grain px-5 pb-5 pt-7 shadow-soft transition-shadow hover:shadow-paper">
           {/* 封盖折线 */}
           <svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute inset-x-0 top-0 h-7 w-full" aria-hidden>
@@ -129,7 +129,7 @@ function renderList(tab: Tab, data: unknown[]) {
   }
   if (tab === 'replying') {
     return (data as ReplyingItem[]).map((c) => (
-      <Link key={c.claimId} href={`/reply/${c.claimId}`} className="card block p-4 hover:shadow-paper">
+      <Link key={c.claimId} href={`/reply?claim=${c.claimId}`} className="card block p-4 hover:shadow-paper">
         <div className="flex items-center justify-between font-ui text-[12px] text-ink2">
           <span>{c.letterTitle || '待回信件'}</span>
           <span>剩余时间至 {new Date(c.expiresAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { api, ApiError, ReceivedReply } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useAuth';
 import { Envelope } from '@/components/Envelope';
@@ -19,8 +19,8 @@ const FEEDBACKS: { type: string; label: string }[] = [
   { type: 'UNCOMFORTABLE', label: '让我不太舒服' },
 ];
 
-export default function ReceivedPage() {
-  const { id } = useParams<{ id: string }>();
+function ReceivedInner() {
+  const id = useSearchParams().get('id') ?? '';
   const { profile, loading: authLoading } = useRequireAuth();
   const { font, toggle } = useReadingFont();
   const { markAllRead } = useUnread();
@@ -133,5 +133,13 @@ export default function ReceivedPage() {
       </div>
       <Toast message={toast} />
     </main>
+  );
+}
+
+export default function ReceivedPage() {
+  return (
+    <Suspense fallback={<Spinner label="正在走向你的信箱…" />}>
+      <ReceivedInner />
+    </Suspense>
   );
 }

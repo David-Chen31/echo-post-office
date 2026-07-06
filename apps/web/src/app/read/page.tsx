@@ -46,7 +46,7 @@ export default function ReadPage() {
     setBusy(true);
     try {
       const r = await api.post<ClaimResult>(`/mailbox/inbox/${letter.letterId}/claim`);
-      router.push(`/reply/${r.claimId}`);
+      router.push(`/reply?claim=${r.claimId}`);
     } catch (e) {
       notify(e instanceof ApiError ? e.message : '领取失败');
       setBusy(false);

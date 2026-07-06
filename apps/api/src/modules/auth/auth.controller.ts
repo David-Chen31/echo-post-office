@@ -69,24 +69,37 @@ export class AuthController {
   ): Promise<{ ok: boolean }> {
     const rt = (req as Request & { cookies?: Record<string, string> }).cookies?.refresh_token;
     await this.auth.logout(rt);
-    res.clearCookie('access_token');
-    res.clearCookie('refresh_token');
+    const { sameSite, secure } = cookiePolicy();
+    res.clearCookie('access_token', { sameSite, secure });
+    res.clearCookie('refresh_token', { sameSite, secure });
     return { ok: true };
   }
 
   private setAuthCookies(res: Response, tokens: TokenPair): void {
-    const secure = process.env.NODE_ENV === 'production';
+    const { sameSite, secure } = cookiePolicy();
     res.cookie('access_token', tokens.accessToken, {
       httpOnly: true,
       secure,
-      sameSite: 'lax',
+      sameSite,
       maxAge: 15 * 60 * 1000,
     });
     res.cookie('refresh_token', tokens.refreshToken, {
       httpOnly: true,
       secure,
-      sameSite: 'lax',
+      sameSite,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
   }
+}
+
+/**
+ * Cookie 策略：
+ * - 同源部署（默认）：sameSite=lax。
+ * - 跨源部署（前端 GitHub Pages + 后端另一域名）：设 COOKIE_CROSS_SITE=true，
+ *   则 sameSite=none + secure=true（浏览器要求跨站 cookie 必须 Secure）。
+ */
+function cookiePolicy(): { sameSite: 'lax' | 'none'; secure: boolean } {
+  const crossSite = process.env.COOKIE_CROSS_SITE === 'true';
+  if (crossSite) return { sameSite: 'none', secure: true };
+  return { sameSite: 'lax', secure: process.env.NODE_ENV === 'production' };
 }
