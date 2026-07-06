@@ -8,6 +8,7 @@ import { Envelope } from '@/components/Envelope';
 import { LetterPaper, LetterText } from '@/components/LetterPaper';
 import { FontToggle } from '@/components/FontToggle';
 import { useReadingFont } from '@/lib/useReadingFont';
+import { useUnread } from '@/lib/useUnread';
 import { BackHeader, Spinner, Toast } from '@/components/ui';
 
 const FEEDBACKS: { type: string; label: string }[] = [
@@ -22,10 +23,16 @@ export default function ReceivedPage() {
   const { id } = useParams<{ id: string }>();
   const { profile, loading: authLoading } = useRequireAuth();
   const { font, toggle } = useReadingFont();
+  const { markAllRead } = useUnread();
 
   const [reply, setReply] = useState<ReceivedReply | null>(null);
   const [loading, setLoading] = useState(true);
   const [opened, setOpened] = useState(false);
+
+  // 拆信后自动标记通知已读
+  useEffect(() => {
+    if (opened) void markAllRead();
+  }, [opened, markAllRead]);
   const [favorited, setFavorited] = useState(false);
   const [gave, setGave] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);

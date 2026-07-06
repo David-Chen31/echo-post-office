@@ -17,6 +17,7 @@ export default function HomePage() {
     title: '有些话，不知道该说给谁听。',
     subtitle: '把它写成一封信，寄给一个愿意认真读完的人。',
   });
+  const [stories, setStories] = useState<string[]>([]);
 
   useEffect(() => {
     api
@@ -24,6 +25,12 @@ export default function HomePage() {
       .then((r) => r.value && setHero(r.value))
       .catch(() => {
         /* 用默认文案兜底 */
+      });
+    api
+      .get<{ value: string[] }>('/configs/home.stories')
+      .then((r) => Array.isArray(r.value) && setStories(r.value))
+      .catch(() => {
+        /* 无故事则不展示 */
       });
   }, []);
 
@@ -78,6 +85,17 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* 少量匿名用户故事 */}
+      {stories.length > 0 && (
+        <section className="mt-12 space-y-3">
+          {stories.map((s, i) => (
+            <div key={i} className="card p-4 font-hand text-[17px] leading-relaxed text-ink">
+              {s}
+            </div>
+          ))}
+        </section>
+      )}
 
       <BottomNav />
     </main>
