@@ -129,9 +129,10 @@ export default function ReplyPage() {
       </div>
 
       {/* 回信编辑 */}
-      <div className="writing-sheet card px-7 py-6">
+      <div className="writing-sheet card paper-grain px-7 py-6">
+        <p className="writing-salutation">亲爱的你，</p>
         <textarea
-          className="writing-area ruled-bg min-h-[38vh]"
+          className="writing-area ruled-bg min-h-[34vh]"
           placeholder="　　给这位陌生人写下你的回应……（按 Tab 段首空两格）"
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -148,6 +149,7 @@ export default function ReplyPage() {
           }}
           autoFocus
         />
+        <p className="writing-signature">—— 一个认真读过你信的人</p>
       </div>
       <div className="mt-2 text-right font-ui text-[12px] text-ink2">{content.trim().length} 字</div>
 

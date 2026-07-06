@@ -17,13 +17,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="zh-CN">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* 手写体(Ma Shan Zheng) + 印刷体(Noto Serif SC)，display=swap 先用系统字体顶上 */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600&display=swap"
-          rel="stylesheet"
-        />
+        {/* 手写体自托管于 /public/fonts（见 globals.css @font-face），不再依赖 Google Fonts */}
+        <link rel="preload" href="/fonts/MaShanZheng-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       </head>
       <body>
         <div className="mx-auto min-h-[100dvh] w-full max-w-[680px] px-5">{children}</div>

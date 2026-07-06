@@ -2,9 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 自托管手写体：去除 Google Fonts 外网依赖，首屏更快、离线可用 */
+@font-face {
+  font-family: 'Ma Shan Zheng';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/MaShanZheng-Regular.woff2') format('woff2');
+}
+
 :root {
   --font-hand: 'Ma Shan Zheng';
-  --font-print: 'Noto Serif SC';
+  /* 印刷体改用系统衬线（宋体族），不再联网加载 Noto Serif SC */
+  --font-print: 'Songti SC', 'STSong', 'STSongti', 'SimSun', serif;
 }
 
 @layer base {
