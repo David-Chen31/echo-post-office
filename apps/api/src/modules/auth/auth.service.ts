@@ -45,7 +45,7 @@ export class AuthService {
     await this.redis.del(this.codeKey(scene, target));
   }
 
-  async register(dto: RegisterDto): Promise<{ userId: string }> {
+  async register(dto: RegisterDto): Promise<TokenPair> {
     await this.verifyCode('register', dto.target, dto.code);
 
     const isEmail = dto.accountType === AccountType.EMAIL;
@@ -63,9 +63,11 @@ export class AuthService {
         email: isEmail ? dto.target : null,
         phone: isEmail ? null : dto.target,
         passwordHash: dto.password ? await bcrypt.hash(dto.password, 10) : null,
+        lastActiveAt: new Date(),
       },
     });
-    return { userId: user.id.toString() };
+    // 注册即登录：直接签发令牌，免去"再取一次验证码"的二次流程
+    return this.issueTokens(user.id, this.normalizeRole(user.role));
   }
 
   async login(dto: LoginDto): Promise<TokenPair> {

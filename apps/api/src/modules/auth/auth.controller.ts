@@ -30,8 +30,13 @@ export class AuthController {
   @Public()
   @RateLimit({ windowSec: 60, max: 5 })
   @Post('register')
-  async register(@Body(new ZodValidationPipe(registerSchema)) dto: RegisterDto): Promise<{ userId: string }> {
-    return this.auth.register(dto);
+  async register(
+    @Body(new ZodValidationPipe(registerSchema)) dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<TokenPair> {
+    const tokens = await this.auth.register(dto);
+    this.setAuthCookies(res, tokens);
+    return tokens;
   }
 
   @Public()

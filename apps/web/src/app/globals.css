@@ -186,6 +186,12 @@
            font-ui text-[15px] text-ink placeholder:text-ink2/70
            focus:outline-none focus:ring-2 focus:ring-glow/50;
   }
+  /* 纸感输入：去方框，改下横线（像在表格线上写字），聚焦时线转暖 */
+  .ink-field {
+    @apply w-full border-0 border-b border-line bg-transparent px-1 py-2
+           font-ui text-[15px] text-ink placeholder:text-ink2/55
+           outline-none transition-colors focus:border-stamp;
+  }
   .card {
     @apply rounded-card bg-letter shadow-soft border border-line/70;
   }

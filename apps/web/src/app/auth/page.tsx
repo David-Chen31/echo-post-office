@@ -46,16 +46,12 @@ function AuthInner() {
     if (mode === 'register' && !nickname.trim()) return notify('给自己起一个昵称吧');
     setSubmitting(true);
     try {
+      // 注册即登录：注册接口直接下发令牌，无需再取一次验证码
       if (mode === 'register') {
         await api.post('/auth/register', { accountType: 'EMAIL', target: email, code, nickname });
-        // 注册后用同一邮箱再走登录拿 token
-        await api.post('/auth/code', { target: email, scene: 'login' });
-        notify('注册成功，请用新验证码登录');
-        setMode('login');
-        setCode('');
-        return;
+      } else {
+        await api.post('/auth/login', { target: email, code });
       }
-      await api.post('/auth/login', { target: email, code });
       router.replace(next);
     } catch (e) {
       notify(e instanceof ApiError ? e.message : '操作失败');
@@ -67,9 +63,9 @@ function AuthInner() {
   return (
     <main className="pb-16">
       <BackHeader title="登录 / 注册" />
-      <div className="mt-6 text-center">
-        <p className="font-hand text-[24px] text-ink">慢慢来，先进门坐一会儿</p>
-        <p className="mt-2 font-ui text-[13px] text-ink2">匿名书信，只需要一个邮箱</p>
+      <div className="mt-8 text-center">
+        <p className="font-hand text-[26px] text-ink">推开门，先在门口登记一下</p>
+        <p className="mt-2 font-ui text-[13px] text-ink2">匿名书信，只需要一个邮箱。这里没有点赞，只有信。</p>
       </div>
 
       <div className="mx-auto mt-8 flex w-full max-w-[200px] rounded-full border border-line bg-letter p-1 font-ui text-[14px]">
@@ -88,7 +84,7 @@ function AuthInner() {
 
       <div className="mt-8 space-y-3">
         <input
-          className="field"
+          className="ink-field"
           type="email"
           inputMode="email"
           placeholder="你的邮箱"
@@ -97,16 +93,16 @@ function AuthInner() {
         />
         {mode === 'register' && (
           <input
-            className="field"
+            className="ink-field"
             placeholder="一个匿名昵称"
             maxLength={32}
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
           />
         )}
-        <div className="flex gap-2">
+        <div className="flex items-end gap-2">
           <input
-            className="field flex-1"
+            className="ink-field flex-1"
             inputMode="numeric"
             maxLength={6}
             placeholder="6 位验证码"

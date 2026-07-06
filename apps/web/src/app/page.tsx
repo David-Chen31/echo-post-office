@@ -42,6 +42,15 @@ export default function HomePage() {
 /* 未登录：门厅。只讲这里是什么 + 一个进门的入口，不暴露任何功能。 */
 function Foyer() {
   const hero = useHero();
+  const [stories, setStories] = useState<string[]>([]);
+  useEffect(() => {
+    api
+      .get<{ value: string[] }>('/configs/home.stories')
+      .then((r) => Array.isArray(r.value) && setStories(r.value))
+      .catch(() => {
+        /* 无故事则不展示 */
+      });
+  }, []);
   return (
     <main className="flex min-h-[100dvh] flex-col">
       <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
@@ -82,6 +91,21 @@ function Foyer() {
         </motion.div>
       </div>
 
+      {stories.length > 0 && (
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 0.8 }}
+          className="mx-auto w-full max-w-[420px] space-y-2 pb-8"
+        >
+          {stories.slice(0, 3).map((s, i) => (
+            <p key={i} className="font-hand text-[15px] leading-relaxed text-ink2/90">
+              {s}
+            </p>
+          ))}
+        </motion.section>
+      )}
+
       <footer className="pb-10 text-center font-ui text-[12px] text-ink2">
         <p>这里不鼓励快速聊天，只鼓励认真写信。</p>
         <Link href="/rules" className="mt-2 inline-block underline-offset-4 hover:underline">
@@ -95,17 +119,6 @@ function Foyer() {
 /* 已登录：书桌。写信 / 读信入口 + 底部导航。 */
 function Desk() {
   const hero = useHero();
-  const [stories, setStories] = useState<string[]>([]);
-
-  useEffect(() => {
-    api
-      .get<{ value: string[] }>('/configs/home.stories')
-      .then((r) => Array.isArray(r.value) && setStories(r.value))
-      .catch(() => {
-        /* 无故事则不展示 */
-      });
-  }, []);
-
   return (
     <main className="pb-24">
       <motion.div
@@ -140,16 +153,6 @@ function Desk() {
           ✉ 读一封信
         </Link>
       </motion.div>
-
-      {stories.length > 0 && (
-        <section className="mt-12 space-y-3">
-          {stories.map((s, i) => (
-            <div key={i} className="card p-4 font-hand text-[17px] leading-relaxed text-ink">
-              {s}
-            </div>
-          ))}
-        </section>
-      )}
 
       <BottomNav />
     </main>
