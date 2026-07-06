@@ -121,12 +121,10 @@ export default function ReplyPage() {
         </LetterPaper>
       )}
 
-      {/* 温和引导 */}
-      <div className="mb-3 rounded-card border border-line/70 bg-paper2/60 p-4 font-ui text-[12.5px] leading-relaxed text-ink2">
-        先回应对方的感受，再表达自己的看法。
-        <br />
-        不必解决所有问题，认真读完本身就是一种回应。
-      </div>
+      {/* 温和引导：淡墨小字，不做成卡片 */}
+      <p className="mb-3 px-1 font-ui text-[12.5px] leading-relaxed text-ink2">
+        先回应对方的感受，再说自己的看法；不必解决所有问题，认真读完本身就是一种回应。
+      </p>
 
       {/* 回信编辑 */}
       <div className="writing-sheet card paper-grain px-7 py-6">

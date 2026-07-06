@@ -34,14 +34,16 @@ export default function RulesPage() {
 
       <section className="mt-8">
         <p className="mb-3 font-ui text-[13px] text-ink2">在这里，我们约定：</p>
-        <ul className="space-y-3">
-          {rules.map((r, i) => (
-            <li key={i} className="card flex items-start gap-3 p-4">
-              <span className="font-hand text-[18px] text-stamp">{i + 1}</span>
-              <span className="font-print text-[15px] leading-relaxed text-ink">{r}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="card paper-grain p-6">
+          <ul className="space-y-4">
+            {rules.map((r, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="font-hand text-[18px] text-stamp">{i + 1}、</span>
+                <span className="font-print text-[15px] leading-relaxed text-ink">{r}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       <section className="mt-8 rounded-card border border-stamp/30 bg-stamp/5 p-5">

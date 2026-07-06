@@ -2,12 +2,35 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api, ReceivedReply, ReplyingItem, SentLetter } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useAuth';
-import { CATEGORY_LABELS, LETTER_STATUS_LABELS } from '@/lib/labels';
+import { LETTER_STATUS_LABELS } from '@/lib/labels';
 import { BackHeader, EmptyState, Spinner } from '@/components/ui';
 import { BottomNav } from '@/components/BottomNav';
 import { Stamp } from '@/components/Stamp';
+
+type Draft = { draftId: string; title: string | null; content: string; updatedAt: string };
+
+/** 草稿续写：把该草稿正文写回本地草稿槽，再进写信页载入，避免与其它本地草稿串了。 */
+function DraftItem({ draft }: { draft: Draft }) {
+  const router = useRouter();
+  const open = () => {
+    try {
+      localStorage.setItem('letter-draft', JSON.stringify({ content: draft.content }));
+    } catch {
+      /* ignore */
+    }
+    router.push('/write');
+  };
+  return (
+    <button onClick={open} className="card block w-full p-4 text-left hover:shadow-paper">
+      <span className="font-hand text-[18px] text-ink">{draft.title || '未寄出的信'}</span>
+      <p className="mt-1 line-clamp-2 font-print text-[14px] text-ink2">{draft.content}</p>
+      <p className="mt-2 font-ui text-[12px] text-stamp">继续写 →</p>
+    </button>
+  );
+}
 
 type Tab = 'received' | 'sent' | 'replying' | 'favorites' | 'drafts';
 const TABS: { key: Tab; label: string }[] = [
@@ -50,16 +73,17 @@ export default function MailboxPage() {
     <main className="pb-24">
       <BackHeader title="我的信箱" />
 
-      <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
+      <div className="mt-4 flex gap-5 overflow-x-auto border-b border-line/60">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`whitespace-nowrap rounded-full px-3.5 py-1.5 font-ui text-[13px] transition-colors ${
-              tab === t.key ? 'bg-stamp text-letter' : 'bg-letter text-ink2 border border-line'
+            className={`relative whitespace-nowrap pb-2 font-ui text-[13px] transition-colors ${
+              tab === t.key ? 'text-stamp' : 'text-ink2 hover:text-ink'
             }`}
           >
             {t.label}
+            {tab === t.key && <span className="absolute inset-x-0 -bottom-px h-[2px] bg-stamp" />}
           </button>
         ))}
       </div>
@@ -124,19 +148,10 @@ function renderList(tab: Tab, data: unknown[]) {
             {LETTER_STATUS_LABELS[l.status] ?? l.status}
           </span>
         </div>
-        <div className="mt-2 flex items-center gap-3 font-ui text-[12px] text-ink2">
-          <span>{CATEGORY_LABELS[l.category]}</span>
-          <span>收到 {l.replyCount} 封回信</span>
-        </div>
+        <div className="mt-2 font-ui text-[12px] text-ink2">收到 {l.replyCount} 封回信</div>
       </div>
     ));
   }
   // drafts
-  return (data as { draftId: string; title: string | null; content: string; updatedAt: string }[]).map((d) => (
-    <Link key={d.draftId} href="/write" className="card block p-4 hover:shadow-paper">
-      <span className="font-hand text-[18px] text-ink">{d.title || '未命名草稿'}</span>
-      <p className="mt-1 line-clamp-2 font-print text-[14px] text-ink2">{d.content}</p>
-      <p className="mt-2 font-ui text-[12px] text-stamp">继续写 →</p>
-    </Link>
-  ));
+  return (data as Draft[]).map((d) => <DraftItem key={d.draftId} draft={d} />);
 }
