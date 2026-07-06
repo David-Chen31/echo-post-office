@@ -1,0 +1,18 @@
+{
+  "//": "供 Vercel @vercel/node 编译 api/index.ts 时使用：NestJS 需要 legacy 装饰器语义。",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["api/**/*.ts"]
+}
