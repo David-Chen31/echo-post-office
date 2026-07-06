@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUnread } from '@/lib/useUnread';
+import { useProfile } from '@/lib/useAuth';
 
 const ITEMS = [
   { href: '/', label: '首页', icon: '⌂' },
@@ -14,7 +15,10 @@ const ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { count } = useUnread();
+  const { profile } = useProfile();
+  const { count } = useUnread(!!profile);
+  // 未登录不渲染导航（门厅不暴露任何功能入口）
+  if (!profile) return null;
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 backdrop-blur">
       <div className="mx-auto flex max-w-[560px] items-stretch justify-around">
