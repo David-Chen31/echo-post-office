@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+**/dist
+apps/web/.next
+apps/web/out
+.git
+.github
+*.log
+.env
+.env.*
+!.env.example
+下一步开发计划.md
+scratchpad

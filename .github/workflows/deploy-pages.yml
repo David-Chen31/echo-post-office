@@ -1,0 +1,60 @@
+name: Deploy Web to GitHub Pages
+
+# 前端静态站部署到 GitHub Pages。
+# 需在仓库 Settings → Pages 选择 "GitHub Actions" 作为来源，
+# 并在 Settings → Secrets and variables → Actions → Variables 配置：
+#   NEXT_PUBLIC_API_BASE  = https://<你的后端域名>            （Render 后端地址）
+#   NEXT_PUBLIC_BASE_PATH = /<仓库名>  （项目页需要，如 /echo-post；用户页/自定义域名留空）
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'packages/shared/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build:shared
+      - name: Build static site
+        env:
+          STATIC_EXPORT: 'true'
+          NEXT_PUBLIC_API_BASE: ${{ vars.NEXT_PUBLIC_API_BASE }}
+          NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
+        run: npm run build:web
+      - name: SPA fallback + disable Jekyll
+        run: |
+          cp apps/web/out/index.html apps/web/out/404.html || true
+          touch apps/web/out/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

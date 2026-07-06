@@ -10,7 +10,9 @@
   "scripts": {
     "build:shared": "npm run build -w @letter/shared",
     "build:api": "npm run build -w @letter/api",
+    "build:web": "npm run build -w @letter/web",
     "build": "npm run build:shared && npm run build:api",
+    "prisma:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
     "dev:api": "npm run start:dev -w @letter/api",
     "dev:web": "npm run dev -w @letter/web",
     "typecheck": "npm run typecheck -w @letter/shared && npm run typecheck -w @letter/api",

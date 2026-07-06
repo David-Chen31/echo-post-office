@@ -32,9 +32,10 @@ async function bootstrap(): Promise<void> {
   app.useGlobalInterceptors(new ResponseInterceptor());
   // 校验统一走 zod（ZodValidationPipe），不依赖 class-validator。
 
-  const port = config.get<number>('API_PORT', 4000);
-  await app.listen(port);
-  new Logger('Bootstrap').log(`API listening on http://localhost:${port}/api/v1`);
+  // 云平台（Render 等）通过 PORT 注入端口；本地回退 API_PORT。
+  const port = Number(process.env.PORT) || config.get<number>('API_PORT', 4000);
+  await app.listen(port, '0.0.0.0');
+  new Logger('Bootstrap').log(`API listening on :${port}/api/v1`);
 }
 
 void bootstrap();
