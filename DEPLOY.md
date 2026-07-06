@@ -1,72 +1,94 @@
-# 上线部署指南（GitHub Pages + 免费后端）
+# 上线部署指南（全 Vercel，免费无需信用卡）
 
-前端是纯静态站，放 **GitHub Pages**；后端（NestJS）+ **Postgres** + **Redis** + **邮件** 放免费托管。
-你负责注册账号、把连接串/密钥填进环境变量；代码、配置、CI 都已就绪。
+前端（Next.js）和后端（NestJS）都部署到 **Vercel**（Hobby 免费、无需信用卡），
+数据库用 **Neon(Postgres)**、缓存/队列用 **Upstash(Redis)**、验证码用任意 **SMTP** 邮箱。
 
 ```
-浏览器 ──> GitHub Pages（前端静态站）
-              │  fetch(NEXT_PUBLIC_API_BASE)  跨源 + 携带 cookie
+浏览器 ──> Vercel 前端（Next.js SSR）
+              │  /api/* 由 Next 反向代理到后端（同源，cookie 用 lax 即可，无需跨源配置）
               ▼
-        Render（后端 Docker）──> Neon(Postgres) / Upstash 或 Render(Redis) / SMTP(邮件)
+        Vercel 后端（NestJS Serverless 函数）──> Neon(Postgres) / Upstash(Redis) / SMTP
 ```
 
-> 关键点：前端和后端不同域名，所以 cookie 走 `SameSite=None; Secure`（后端已按 `COOKIE_CROSS_SITE=true` 处理），
-> 后端只放行你的 Pages 源（`CORS_ORIGIN`）。
+> 用「前端代理 /api 到后端」的方式，浏览器只看到前端一个域名，cookie 天然同源，
+> 省去跨站 cookie / CORS 的麻烦。
+
+> ⚠️ Serverless 限制（重要）：Vercel 无常驻进程，**BullMQ 后台 worker 与定时任务不会运行**
+> （如"领取超时自动释放信件"）。核心闭环（注册/登录/写信/读信/领取/回信/通知）不受影响。
+> 若要后台作业，见文末「需要后台任务时」。
 
 ---
 
 ## 1. Postgres（Neon，免费）
 1. https://neon.tech 新建项目。
-2. 复制连接串（形如 `postgresql://user:pass@ep-xxx.aws.neon.tech/db?sslmode=require`）。
+2. 复制**带连接池**的连接串（Neon 面板 "Pooled connection"，形如
+   `postgresql://user:pass@ep-xxx-pooler.aws.neon.tech/db?sslmode=require`）。
 3. 记为 **DATABASE_URL**。
 
-## 2. Redis（二选一）
-- **Upstash**（https://upstash.com，免费）：创建 Redis，复制 `rediss://...` 连接串。
-- 或 **Render Key Value**（和后端同平台，内网更稳）：创建后复制内网连接串。
-- 记为 **REDIS_URL**。
+## 2. Redis（Upstash，免费）
+1. https://upstash.com 新建 Redis 数据库（选离你后端区域近的）。
+2. 复制 `rediss://...` 连接串。
+3. 记为 **REDIS_URL**。
 
 ## 3. 邮件 SMTP（真实发验证码）
-用任意支持 SMTP 的邮箱/服务，拿到 host/port/user/pass：
-- QQ 邮箱：`smtp.qq.com:587`，密码用"授权码"（非登录密码）。
-- Gmail：`smtp.gmail.com:587` + 应用专用密码。
+拿到 host/port/user/pass：
+- QQ 邮箱：`smtp.qq.com` / 465（SSL）或 587，密码用"授权码"（非登录密码）。
+- Gmail：`smtp.gmail.com` / 587 + 应用专用密码。
 - 或 Resend/SendGrid 等。
-- 记为 **SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS**，以及发件人 **MAIL_FROM**（如 `回声邮局 <no-reply@你的域名>`）。
+- 记为 **SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS** + 发件人 **MAIL_FROM**。
 
-## 4. 后端上线（Render）
+## 4. 后端上线（Vercel Serverless）
 1. 代码推到 GitHub（见文末）。
-2. https://render.com → New → **Blueprint** → 选本仓库，会读取根目录 `render.yaml`。
-3. 在服务的 **Environment** 里填 `sync:false` 的变量：
-   - `DATABASE_URL`、`REDIS_URL`、`CORS_ORIGIN`（先留空或填占位，第 5 步拿到 Pages 地址后回填）、
-   - `MAIL_FROM`、`SMTP_HOST`、`SMTP_USER`、`SMTP_PASS`（`SMTP_PORT` 默认 587）。
-   - `JWT_*` 已配置为自动生成。
-4. 部署完成后拿到后端地址，如 `https://echo-post-api.onrender.com`。
-   - 容器启动会**自动执行数据库迁移**（`prisma migrate deploy`），无需手动建表。
-   - 健康检查：访问 `https://<后端>/api/v1/health` 应返回 `{"ok":true}`。
-5. （可选）灌入示范信 + 设管理员：Render 服务 → **Shell**：
-   ```bash
-   npx tsx prisma/seed.ts
-   npx tsx prisma/promote-admin.ts 你的邮箱 admin
-   ```
+2. https://vercel.com → Add New → **Project** → 导入本仓库。
+3. **Root Directory 保持仓库根目录**（会读取根目录 `vercel.json` 与 `api/index.ts`）。Framework 选 **Other**。
+4. **Environment Variables** 填：
+   - `DATABASE_URL`、`REDIS_URL`（上面两步）
+   - `NODE_ENV` = `production`
+   - `JWT_ACCESS_SECRET`、`JWT_REFRESH_SECRET`（各填一段随机长字符串）
+   - `MAIL_DRIVER` = `smtp`、`MAIL_FROM`、`SMTP_HOST`、`SMTP_PORT`、`SMTP_USER`、`SMTP_PASS`
+5. Deploy。构建时会自动 `prisma generate` + **`prisma migrate deploy`（自动建表/迁移）**。
+6. 部署完成得到后端地址，如 `https://echo-post-api.vercel.app`。
+   - 验证：访问 `https://<后端>/api/v1/health` 应返回 `{"ok":true}`。
 
-## 5. 前端上线（GitHub Pages）
-1. 仓库 **Settings → Pages → Build and deployment → Source = GitHub Actions**。
-2. 仓库 **Settings → Secrets and variables → Actions → Variables** 新增：
-   - `NEXT_PUBLIC_API_BASE` = 第 4 步的后端地址（如 `https://echo-post-api.onrender.com`）。
-   - `NEXT_PUBLIC_BASE_PATH` = `/<仓库名>`（项目页必须，如 `/echo-post`）。
-     - 若用**自定义域名**或 **用户主页仓库**（`<user>.github.io`），此项留空不设。
-3. 推送到 `main`（或在 Actions 里手动 Run），工作流 `Deploy Web to GitHub Pages` 会构建并发布。
-4. 得到前端地址，如 `https://<user>.github.io/<仓库名>/`。
+## 5. 前端上线（Vercel）
+1. 再 Add New → **Project** → 同一个仓库，**Root Directory 设为 `apps/web`**，Framework 自动识别 Next.js。
+2. **Environment Variables** 填：
+   - `API_PROXY_TARGET` = 第 4 步的后端地址（如 `https://echo-post-api.vercel.app`）。
+     这会让 Next 把 `/api/*` 反向代理到后端（同源 cookie）。
+   - **不要**设 `NEXT_PUBLIC_API_BASE`（留空即走同源代理）。
+3. Deploy，得到前端地址，如 `https://echo-post.vercel.app`。
+4. 打开前端地址 → 注册（会收到真实验证码邮件）→ 写信/读信跑通。
 
-## 6. 打通跨源（回填 CORS）
-1. 回到 Render，把 **CORS_ORIGIN** 设为第 5 步的 Pages 源（**不带路径**，如 `https://<user>.github.io`），保存触发重部署。
-2. 打开 Pages 地址 → 注册（会收到真实验证码邮件）→ 写信/读信验证跑通。
+## 6. 灌示范内容 + 设管理员（在你本地跑，连 Neon）
+把 Neon 连接串临时设成环境变量，在项目根目录执行：
+```bash
+# Windows PowerShell
+$env:DATABASE_URL="postgresql://...neon...sslmode=require"
+npx tsx prisma/seed.ts
+npx tsx prisma/promote-admin.ts 你的邮箱 admin
+```
+（seed/promote 走的是同一个 Neon 库，跑一次即可。）
 
 ---
 
 ## 说明与注意
-- **Render 免费实例会休眠**：无人访问一段时间后休眠，下次首个请求要等 ~30–50 秒唤醒（属正常）。
-- **迁移自动执行**：每次后端部署启动时 `prisma migrate deploy` 会把新迁移应用到 Neon。
-- **后台任务（worker）**：领取超时释放等后台作业在独立 `worker.ts`。首个版本仅跑 API 也能用核心闭环；
-  如需后台作业，可另开一个 Render 服务（同镜像，启动命令改为 `node apps/api/dist/worker.js`）——非上线必需，可后补。
-- **本地开发不受影响**：不设 `STATIC_EXPORT` 时仍是同源 `/api` 代理 + `sameSite=lax`。
-- **自定义域名**：给 Pages 绑定域名后，`NEXT_PUBLIC_BASE_PATH` 留空，并把 `CORS_ORIGIN` 换成该域名。
+- **同源代理**：前端 `API_PROXY_TARGET` 指向后端，浏览器只见前端域名，cookie 用 `lax`（生产 `Secure`）即可，无需 `COOKIE_CROSS_SITE`。
+- **冷启动**：后端 serverless 空闲后首个请求要多等 1–3 秒（Nest 初始化），属正常。
+- **迁移自动执行**：后端每次部署构建时 `prisma migrate deploy` 应用新迁移到 Neon。
+- **需要后台任务时**（领取超时释放等）：serverless 跑不了常驻 worker。两种补法：
+  1. 用一台 Docker 主机（如 Koyeb/Fly，注意各家是否要卡）跑仓库根目录的 `Dockerfile`
+     （已含启动即迁移 + 常驻进程，`node apps/api/dist/worker.js` 可单独跑 worker）；
+  2. 或用 Vercel Cron 定时打一个清理接口（后续再加）。
+- **本地开发不变**：`npm run dev:web` + `dev:api`，`/api` 走本地代理。
+- **改用 GitHub Pages 放前端**（可选）：前端也可静态导出上 Pages（仓库已内置 `STATIC_EXPORT` 与
+  Pages 工作流），但那样是跨源，需要在后端设 `COOKIE_CROSS_SITE=true` + `CORS_ORIGIN`，
+  比全 Vercel 同源麻烦，不推荐。
+
+---
+
+## 推送代码到 GitHub
+Vercel 从 GitHub 拉取，需先把分支合并到 `main` 并推送：
+```bash
+git checkout main && git merge feat/foyer-craft && git push origin main
+```
+（这一步是对外发布，确认后再做。）
