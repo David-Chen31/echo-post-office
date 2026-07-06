@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export function Spinner({ label = '正在等待…' }: { label?: string }) {
   return (
@@ -22,12 +23,18 @@ export function EmptyState({ title, hint }: { title: string; hint?: string }) {
 
 export function BackHeader({ title, right }: { title?: string; right?: React.ReactNode }) {
   return (
-    <header className="sticky top-0 z-10 -mx-5 flex items-center justify-between bg-paper/90 px-5 py-3 backdrop-blur">
-      <Link href="/" className="font-ui text-[15px] text-ink2 hover:text-ink" aria-label="返回">
-        ←
-      </Link>
+    <header className="sticky top-0 z-10 -mx-5 flex items-center justify-between bg-paper/90 px-3 py-2 backdrop-blur">
+      <motion.div whileHover={{ x: -2 }} whileTap={{ scale: 0.88 }}>
+        <Link
+          href="/"
+          aria-label="返回"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-[22px] leading-none text-ink2 transition-colors hover:bg-letter hover:text-stamp"
+        >
+          ←
+        </Link>
+      </motion.div>
       {title && <span className="font-ui text-[15px] text-ink">{title}</span>}
-      <div className="min-w-[24px] text-right">{right}</div>
+      <div className="min-w-[40px] text-right">{right}</div>
     </header>
   );
 }

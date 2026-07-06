@@ -54,17 +54,35 @@ export function SceneBackdrop() {
             }}
           />
         ))}
-      {/* 月 + 光晕 */}
-      <div className="absolute" style={{ right: '12%', top: '7%' }}>
-        <div
-          style={{
-            width: 60,
-            height: 60,
-            borderRadius: '9999px',
-            background: 'radial-gradient(circle at 38% 36%, #fdf6e3, #f1e4bf 58%, #e4d3a0)',
-            boxShadow: '0 0 56px 22px rgba(240, 230, 190, 0.16)',
-          }}
-        />
+      {/* 月：圆形，但有月海/环形山与明暗交界，带柔光晕 */}
+      <div className="absolute" style={{ right: '12%', top: '7%', filter: 'drop-shadow(0 0 30px rgba(240,230,190,0.3))' }}>
+        <svg width="62" height="62" viewBox="0 0 60 60" aria-hidden>
+          <defs>
+            <radialGradient id="moonBody" cx="38%" cy="34%" r="74%">
+              <stop offset="0%" stopColor="#fdf7e6" />
+              <stop offset="60%" stopColor="#efe1bd" />
+              <stop offset="100%" stopColor="#d7c396" />
+            </radialGradient>
+            <radialGradient id="moonShade" cx="72%" cy="72%" r="62%">
+              <stop offset="0%" stopColor="rgba(96,84,56,0)" />
+              <stop offset="100%" stopColor="rgba(84,72,48,0.32)" />
+            </radialGradient>
+            <clipPath id="moonClip">
+              <circle cx="30" cy="30" r="28" />
+            </clipPath>
+          </defs>
+          <circle cx="30" cy="30" r="28" fill="url(#moonBody)" />
+          {/* 环形山 / 月海 */}
+          <g clipPath="url(#moonClip)" fill="#d3c091">
+            <circle cx="22" cy="19" r="4" opacity="0.6" />
+            <circle cx="38.5" cy="31" r="6.2" opacity="0.5" />
+            <circle cx="25.5" cy="40" r="3" opacity="0.55" />
+            <circle cx="42" cy="17" r="2.3" opacity="0.5" />
+            <circle cx="33" cy="46" r="2" opacity="0.45" />
+          </g>
+          {/* 明暗交界 */}
+          <circle cx="30" cy="30" r="28" fill="url(#moonShade)" />
+        </svg>
       </div>
       {/* 台灯暖光池（信纸上方） */}
       <div
