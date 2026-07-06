@@ -69,6 +69,17 @@
   ::selection {
     background: rgba(232, 184, 109, 0.35);
   }
+
+  /* 所有按钮的克制交互：按下时几乎不易察觉地轻轻下沉，贴合写信的宁静气质 */
+  button:not(:disabled),
+  [role='button'] {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: 180ms;
+    transition-timing-function: ease;
+  }
+  button:not(:disabled):active {
+    transform: scale(0.975);
+  }
 }
 
 @layer components {
@@ -173,13 +184,15 @@
     @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3
            font-ui text-[15px] font-medium transition-all duration-200 select-none
            disabled:opacity-50 disabled:cursor-not-allowed
-           bg-stamp text-letter shadow-soft hover:-translate-y-[1px] hover:shadow-paper;
+           bg-stamp text-letter shadow-soft hover:-translate-y-[1px] hover:shadow-paper
+           active:translate-y-0 active:scale-[0.985] active:shadow-soft;
   }
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3
            font-ui text-[15px] font-medium transition-all duration-200 select-none
            disabled:opacity-50 disabled:cursor-not-allowed
-           bg-letter text-ink border border-line hover:-translate-y-[1px] hover:shadow-soft;
+           bg-letter text-ink border border-line hover:-translate-y-[1px] hover:shadow-soft
+           active:translate-y-0 active:scale-[0.985] active:shadow-soft;
   }
   .field {
     @apply w-full rounded-[10px] border border-line bg-letter px-4 py-3
