@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { api, ApiError, ClaimResult, LetterReader } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useAuth';
-import { CATEGORY_LABELS, MOOD_LABELS } from '@/lib/labels';
 import { LetterPaper, LetterText } from '@/components/LetterPaper';
 import { FontToggle } from '@/components/FontToggle';
 import { useReadingFont } from '@/lib/useReadingFont';
@@ -94,11 +93,7 @@ export default function ReadPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="mt-4 mb-3 flex items-center gap-2 font-ui text-[12px] text-ink2">
-            <span className="rounded-full bg-paper2 px-2.5 py-1">{CATEGORY_LABELS[letter.category] ?? '其他'}</span>
-            {letter.mood && <span className="rounded-full bg-paper2 px-2.5 py-1">{MOOD_LABELS[letter.mood]}</span>}
-            <span className="ml-auto">{letter.fuzzyTime}</span>
-          </div>
+          <div className="mt-4 mb-3 text-right font-ui text-[12px] text-ink2">{letter.fuzzyTime}</div>
 
           {letter.title && <h2 className="mb-2 font-hand text-[22px] text-ink">{letter.title}</h2>}
 

@@ -4,9 +4,7 @@ import { KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useAuth';
-import { CATEGORY_OPTIONS, MOOD_OPTIONS } from '@/lib/labels';
 import { BackHeader, Spinner, Toast } from '@/components/ui';
-import { LetterCategory } from '@letter/shared';
 
 const PROMPTS = [
   '最近最让你放不下的一件事是什么？',
@@ -25,10 +23,6 @@ export default function WritePage() {
   const { profile, loading } = useRequireAuth();
 
   const [content, setContent] = useState('');
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<string>(LetterCategory.JUST_TALK);
-  const [mood, setMood] = useState<string>('');
-  const [showMeta, setShowMeta] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -66,16 +60,13 @@ export default function WritePage() {
     setTimeout(() => setToast(null), 2400);
   };
 
-  // 本地草稿恢复
+  // 本地草稿恢复（只留正文——决策 A 不再有标题/主题/心情）
   useEffect(() => {
     const d = localStorage.getItem('letter-draft');
     if (d) {
       try {
         const p = JSON.parse(d);
         setContent(p.content || '');
-        setTitle(p.title || '');
-        if (p.category) setCategory(p.category);
-        if (p.mood) setMood(p.mood);
       } catch {
         /* ignore */
       }
@@ -87,21 +78,16 @@ export default function WritePage() {
     if (!content.trim()) return;
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      localStorage.setItem('letter-draft', JSON.stringify({ content, title, category, mood }));
+      localStorage.setItem('letter-draft', JSON.stringify({ content }));
       try {
-        await api.post('/letters/draft', {
-          content,
-          title: title || undefined,
-          category: category || undefined,
-          mood: mood || undefined,
-        });
+        await api.post('/letters/draft', { content });
         setSavedAt(new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }));
       } catch {
         /* 本地已存，忽略 */
       }
     }, 1200);
     return () => clearTimeout(saveTimer.current);
-  }, [content, title, category, mood]);
+  }, [content]);
 
   const submit = async () => {
     if (content.trim().length < 50) return notify('再多写一点点吧，至少 50 字，让对方更懂你');
@@ -116,11 +102,7 @@ export default function WritePage() {
     }
     setSubmitting(true);
     try {
-      await api.post(
-        '/letters',
-        { content, title: title || undefined, category, mood: mood || undefined },
-        { 'Idempotency-Key': crypto.randomUUID() },
-      );
+      await api.post('/letters', { content }, { 'Idempotency-Key': crypto.randomUUID() });
       localStorage.removeItem('letter-draft');
       router.push('/write/sent');
     } catch (e) {
@@ -138,18 +120,11 @@ export default function WritePage() {
       <div className="mx-auto w-full max-w-[820px] px-5">
         <BackHeader title="写一封信" right={savedAt ? <span className="font-ui text-[11px] text-ink2">已存 {savedAt}</span> : null} />
 
-        {/* 信纸编辑区：连续横线，标题与正文落在同一套线上 */}
+        {/* 信纸编辑区：连续横线，正文落在同一套线上 */}
         <div className="writing-sheet card mt-4 px-7 py-6 sm:px-9">
-          <input
-            className="writing-title ruled-bg"
-            placeholder="给这封信起个标题（可不填）"
-            maxLength={60}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
           <textarea
             ref={areaRef}
-            className="writing-area ruled-bg min-h-[58vh]"
+            className="writing-area ruled-bg min-h-[62vh]"
             placeholder={`　　此刻，你想说点什么……\n\n（不知道从哪写起？${prompt}）\n（提示：按 Tab 键可在段首空两格）`}
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -158,38 +133,10 @@ export default function WritePage() {
           />
         </div>
 
-        {/* 字数 + 折叠的主题/心情 */}
-        <div className="mt-3 flex items-center justify-between font-ui text-[12px] text-ink2">
-          <span>{count} 字{count > 0 && count < 50 ? ' · 再写一点点' : ''}</span>
-          <button onClick={() => setShowMeta((v) => !v)} className="hover:text-ink">
-            {showMeta ? '收起' : '主题 · 心情 ▾'}
-          </button>
+        {/* 只留一行字数提示 */}
+        <div className="mt-3 text-right font-ui text-[12px] text-ink2">
+          {count} 字{count > 0 && count < 50 ? ' · 再写一点点' : ''}
         </div>
-
-        {showMeta && (
-          <div className="mt-3 space-y-4 animate-fade-up">
-          <div>
-            <p className="mb-2 font-ui text-[12px] text-ink2">这封信关于</p>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORY_OPTIONS.map((o) => (
-                <Chip key={o.value} active={category === o.value} onClick={() => setCategory(o.value)}>
-                  {o.label}
-                </Chip>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="mb-2 font-ui text-[12px] text-ink2">此刻的心情（可不选）</p>
-            <div className="flex flex-wrap gap-2">
-              {MOOD_OPTIONS.map((o) => (
-                <Chip key={o.value} active={mood === o.value} onClick={() => setMood(mood === o.value ? '' : o.value)}>
-                  {o.label}
-                </Chip>
-              ))}
-            </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 封信按钮 */}
@@ -226,18 +173,5 @@ export default function WritePage() {
         </div>
       )}
     </main>
-  );
-}
-
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 font-ui text-[13px] transition-colors ${
-        active ? 'border-stamp bg-stamp text-paper' : 'border-line bg-letter text-ink2 hover:text-ink'
-      }`}
-    >
-      {children}
-    </button>
   );
 }

@@ -58,7 +58,8 @@ export type LetterDraftDto = z.infer<typeof letterDraftSchema>;
 export const submitLetterSchema = z.object({
   title: z.string().max(LIMITS.TITLE_MAX_LENGTH).optional(),
   content: z.string().min(LIMITS.LETTER_MIN_LENGTH).max(LIMITS.LETTER_MAX_LENGTH),
-  category: z.nativeEnum(LetterCategory),
+  // 决策 A：前端不再让用户选主题；省略时后端按“只是想说说”兜底。
+  category: z.nativeEnum(LetterCategory).default(LetterCategory.JUST_TALK),
   mood: z.nativeEnum(Mood).optional(),
   replyPreference: replyPreferenceSchema.optional(),
   isPublic: z.boolean().default(false),
