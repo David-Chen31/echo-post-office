@@ -111,6 +111,35 @@
     line-height: var(--rule);
     letter-spacing: 0.02em;
   }
+  /* 钢笔墨水色光标（书写触感） */
+  .writing-area,
+  .writing-salutation,
+  .writing-signature {
+    caret-color: #6b4a2f;
+  }
+
+  /* 写信氛围：昼 / 夜背景层，铺在信纸之后 */
+  .ambience {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    pointer-events: none;
+    transition: opacity 0.9s ease;
+  }
+  .ambience-day {
+    background: radial-gradient(58% 40% at 50% 2%, rgba(232, 184, 109, 0.16), transparent 70%);
+  }
+  /* 夜：信纸上方一圈台灯暖光 + 四周渐暗 vignette + 深暖底色，营造独处夜写 */
+  .ambience-night {
+    background:
+      radial-gradient(46% 40% at 50% 24%, rgba(240, 196, 120, 0.22), transparent 60%),
+      radial-gradient(120% 115% at 50% 42%, transparent 38%, rgba(24, 18, 13, 0.62) 100%),
+      linear-gradient(180deg, #241d17 0%, #2b2119 100%);
+  }
+  /* 落笔时钢笔墨尖的轻微律动 */
+  .pen-writing {
+    animation: nib 0.6s ease-out;
+  }
 
   /* 兼容旧用法 */
   .paper-lines {
@@ -142,6 +171,18 @@
   }
   .card {
     @apply rounded-card bg-letter shadow-soft border border-line/70;
+  }
+}
+
+@keyframes nib {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  40% {
+    transform: translateY(-1.5px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
   }
 }
 

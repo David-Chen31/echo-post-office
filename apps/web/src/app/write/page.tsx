@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useRequireAuth } from '@/lib/useAuth';
 import { BackHeader, Spinner, Toast } from '@/components/ui';
+import { WritingAmbience } from '@/components/WritingAmbience';
+import { Pen } from '@/components/Pen';
 
 const PROMPTS = [
   '最近最让你放不下的一件事是什么？',
@@ -53,6 +55,15 @@ export default function WritePage() {
   const crisisAck = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
   const areaRef = useRef<HTMLTextAreaElement>(null);
+  const [writing, setWriting] = useState(false);
+  const writeTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  // 落笔触感：输入时短暂点亮钢笔墨尖
+  const markWriting = () => {
+    setWriting(true);
+    clearTimeout(writeTimer.current);
+    writeTimer.current = setTimeout(() => setWriting(false), 600);
+  };
 
   useEffect(() => {
     api
@@ -151,6 +162,7 @@ export default function WritePage() {
 
   return (
     <main className="relative left-1/2 w-screen -translate-x-1/2 pb-28">
+      <WritingAmbience />
       <div className="mx-auto w-full max-w-[820px] px-5">
         <BackHeader title="写一封信" right={savedAt ? <span className="font-ui text-[11px] text-ink2">已存 {savedAt}</span> : null} />
 
@@ -168,7 +180,10 @@ export default function WritePage() {
             className="writing-area ruled-bg min-h-[52vh]"
             placeholder={`　　此刻，你想说点什么……\n\n（不知道从哪写起？${prompt}）\n（提示：按 Tab 键可在段首空两格）`}
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => {
+              setContent(e.target.value);
+              markWriting();
+            }}
             onKeyDown={handleTab}
             autoFocus
           />
@@ -188,9 +203,12 @@ export default function WritePage() {
           />
         </div>
 
-        {/* 只留一行字数提示 */}
-        <div className="mt-3 text-right font-ui text-[12px] text-ink2">
-          {count} 字{count > 0 && count < 50 ? ' · 再写一点点' : ''}
+        {/* 字数提示 + 斜倚的钢笔 */}
+        <div className="mt-3 flex items-center justify-between font-ui text-[12px] text-ink2">
+          <Pen writing={writing} className="opacity-70" />
+          <span>
+            {count} 字{count > 0 && count < 50 ? ' · 再写一点点' : ''}
+          </span>
         </div>
       </div>
 
