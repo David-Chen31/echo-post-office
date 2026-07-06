@@ -7,6 +7,7 @@ import { useRequireAuth } from '@/lib/useAuth';
 import { CATEGORY_LABELS, LETTER_STATUS_LABELS } from '@/lib/labels';
 import { BackHeader, EmptyState, Spinner } from '@/components/ui';
 import { BottomNav } from '@/components/BottomNav';
+import { Stamp } from '@/components/Stamp';
 
 type Tab = 'received' | 'sent' | 'replying' | 'favorites' | 'drafts';
 const TABS: { key: Tab; label: string }[] = [
@@ -83,14 +84,22 @@ export default function MailboxPage() {
 
 function renderList(tab: Tab, data: unknown[]) {
   if (tab === 'received' || tab === 'favorites') {
+    // 一封信呈现为一枚躺在桌上、尚未拆开的信封（含邮票 / 封盖 / 模糊日期），点开才展信
     return (data as ReceivedReply[]).map((r) => (
-      <Link key={r.replyId} href={`/mailbox/received/${r.replyId}`} className="card block p-4 hover:shadow-paper">
-        <div className="flex items-center justify-between font-ui text-[12px] text-ink2">
-          <span>{r.letterTitle || '一封回信'}</span>
-          <span>{r.fuzzyTime}</span>
+      <Link key={r.replyId} href={`/mailbox/received/${r.replyId}`} className="block">
+        <div className="relative overflow-hidden rounded-[12px] border border-line bg-letter paper-grain px-5 pb-5 pt-7 shadow-soft transition-shadow hover:shadow-paper">
+          {/* 封盖折线 */}
+          <svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute inset-x-0 top-0 h-7 w-full" aria-hidden>
+            <path d="M0 2 L200 33 L400 2" fill="none" stroke="#D9CFBC" strokeWidth="1.5" />
+          </svg>
+          {/* 邮票 */}
+          <div className="absolute right-3 top-4">
+            <Stamp size={38} />
+          </div>
+          <p className="pr-12 font-hand text-[19px] text-ink">{r.letterTitle || '一封新回信'}</p>
+          <p className="mt-1 font-ui text-[12px] text-ink2">{r.fuzzyTime}</p>
+          <p className="mt-4 font-ui text-[12px] text-stamp">轻触，拆开这封回信 →</p>
         </div>
-        <p className="mt-2 line-clamp-2 font-hand text-[17px] leading-relaxed text-ink">{r.content}</p>
-        <p className="mt-2 font-ui text-[12px] text-stamp">轻触，拆开这封回信 →</p>
       </Link>
     ));
   }

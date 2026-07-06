@@ -18,7 +18,7 @@ export function LetterPaper({
   withLines?: boolean;
 }) {
   return (
-    <div className={`card relative overflow-hidden bg-letter px-6 py-6 ${className}`}>
+    <div className={`card paper-grain relative overflow-hidden bg-letter px-6 py-6 ${className}`}>
       <div className={`letter-body ${withLines ? 'ruled-bg' : ''}`} data-font={font}>
         {children}
       </div>

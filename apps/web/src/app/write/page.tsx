@@ -120,17 +120,19 @@ export default function WritePage() {
       <div className="mx-auto w-full max-w-[820px] px-5">
         <BackHeader title="写一封信" right={savedAt ? <span className="font-ui text-[11px] text-ink2">已存 {savedAt}</span> : null} />
 
-        {/* 信纸编辑区：连续横线，正文落在同一套线上 */}
-        <div className="writing-sheet card mt-4 px-7 py-6 sm:px-9">
+        {/* 信纸编辑区：抬头 → 连续横线正文 → 落款，落在同一套线上 */}
+        <div className="writing-sheet card paper-grain mt-4 px-7 py-6 sm:px-9">
+          <p className="writing-salutation">致 一位素未谋面的你</p>
           <textarea
             ref={areaRef}
-            className="writing-area ruled-bg min-h-[62vh]"
+            className="writing-area ruled-bg min-h-[56vh]"
             placeholder={`　　此刻，你想说点什么……\n\n（不知道从哪写起？${prompt}）\n（提示：按 Tab 键可在段首空两格）`}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleTab}
             autoFocus
           />
+          <p className="writing-signature">—— 一个给你写信的人</p>
         </div>
 
         {/* 只留一行字数提示 */}

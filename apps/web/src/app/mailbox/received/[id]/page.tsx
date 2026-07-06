@@ -97,6 +97,7 @@ export default function ReceivedPage() {
       <div className="mt-2">
         <Envelope opened={opened} onOpen={() => setOpened(true)}>
           <LetterPaper font={font}>
+            <p className="text-ink2" style={{ textIndent: 0 }}>亲爱的你：</p>
             <LetterText text={reply.content} />
             <p className="mt-4 text-right font-hand text-[16px] text-ink2">—— 一个认真读过你信的人</p>
           </LetterPaper>

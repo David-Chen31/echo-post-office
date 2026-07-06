@@ -98,6 +98,7 @@ export default function ReadPage() {
           {letter.title && <h2 className="mb-2 font-hand text-[22px] text-ink">{letter.title}</h2>}
 
           <LetterPaper font={font}>
+            <p className="text-ink2" style={{ textIndent: 0 }}>见信如晤，</p>
             <LetterText text={letter.content} />
           </LetterPaper>
 
