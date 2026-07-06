@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ApiCode, BlockUserDto, UpdateProfileDto } from '@letter/shared';
+import { ApiCode, BlockUserDto, UpdateProfileDto, UserLevel } from '@letter/shared';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { BusinessException } from '../../common/errors/business.exception';
 
@@ -76,6 +76,42 @@ export class UserService {
       },
     });
     return { ok: true };
+  }
+
+  /**
+   * 依据信任分重算等级与每日配额（信誉越高，领取额度越大）。
+   * 在回信质量反馈后调用（计划书十一章）。
+   */
+  async recomputeLevelAndQuota(userId: bigint): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return;
+    const s = user.trustScore;
+    let level: UserLevel;
+    let claimQuota: number;
+    let writeQuota: number;
+    if (s >= 200) {
+      level = UserLevel.KEEPER;
+      claimQuota = 10;
+      writeQuota = 3;
+    } else if (s >= 120) {
+      level = UserLevel.REPLIER;
+      claimQuota = 5;
+      writeQuota = 2;
+    } else if (s >= 80) {
+      level = UserLevel.READER;
+      claimQuota = 3;
+      writeQuota = 2;
+    } else {
+      level = UserLevel.NEWCOMER;
+      claimQuota = 2;
+      writeQuota = 1;
+    }
+    if (level !== user.level || claimQuota !== user.dailyClaimQuota || writeQuota !== user.dailyWriteQuota) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { level, dailyClaimQuota: claimQuota, dailyWriteQuota: writeQuota },
+      });
+    }
   }
 
   /** 供其它模块查询：该用户拉黑了哪些人（用于信件分配过滤）。 */

@@ -17,6 +17,8 @@ async function bootstrap(): Promise<void> {
   const config = app.get(ConfigService);
 
   app.setGlobalPrefix('api/v1');
+  // 信任反向代理（Next 代理 / 生产网关）转发的 X-Forwarded-For，使 req.ip 为真实客户端 IP，限流才不会串号。
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.use(cookieParser());
   app.enableCors({ origin: true, credentials: true });
 

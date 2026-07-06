@@ -7,13 +7,12 @@ import {
   ReplyFeedbackType,
   ReplyStatus,
 } from '@letter/shared';
+import { LetterStatus } from '@letter/shared';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { RedisService } from '../../infra/redis/redis.service';
 import { ModerationService } from '../moderation/moderation.service';
-import { ClaimService } from '../claim/claim.service';
-import { LetterService } from '../letter/letter.service';
-import { LetterEvent } from '../letter/letter.types';
 import { NotificationService } from '../notification/notification.service';
+import { UserService } from '../user/user.service';
 import { BusinessException } from '../../common/errors/business.exception';
 
 export interface ReplySubmitView {
@@ -29,9 +28,8 @@ export class ReplyService {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly moderation: ModerationService,
-    private readonly claims: ClaimService,
-    private readonly letters: LetterService,
     private readonly notifications: NotificationService,
+    private readonly users: UserService,
   ) {}
 
   /** 校验领取有效（属于本人、状态 CLAIMED、未超时），返回 claim。 */
@@ -106,20 +104,25 @@ export class ReplyService {
       return { replyId: reply.id.toString(), status: ReplyStatus.UNDER_MODERATION, pendingModeration: true };
     }
 
-    // 发布
-    await this.prisma.reply.update({
-      where: { id: reply.id },
-      data: {
-        content: check.maskedContent,
-        riskLevel: check.riskLevel,
-        status: ReplyStatus.PUBLISHED,
-        publishedAt: new Date(),
-      },
+    // 发布：回信发布 + 领取置 REPLIED + 信件推进 REPLIED，三步合入单事务，保证一致性。
+    const letter = await this.prisma.$transaction(async (tx) => {
+      await tx.reply.update({
+        where: { id: reply.id },
+        data: {
+          content: check.maskedContent,
+          riskLevel: check.riskLevel,
+          status: ReplyStatus.PUBLISHED,
+          publishedAt: new Date(),
+        },
+      });
+      await tx.letterClaim.update({ where: { id: claimId }, data: { status: ClaimStatus.REPLIED } });
+      return tx.letter.update({
+        where: { id: claim.letterId },
+        data: { status: LetterStatus.REPLIED },
+      });
     });
-    await this.claims.markReplied(claimId);
-    await this.letters.advanceState(claim.letterId, LetterEvent.REPLIED);
 
-    const letter = await this.prisma.letter.findUniqueOrThrow({ where: { id: claim.letterId } });
+    // 通知在事务提交后异步发出（失败不回滚已发布的回信）
     await this.notifications.push(letter.authorId, NotificationType.REPLY_RECEIVED, {
       letterId: letter.id.toString(),
       message: '你的信箱里有一封新来信。',
@@ -149,6 +152,8 @@ export class ReplyService {
         where: { id: reply.writerId },
         data: { trustScore: { increment: delta } },
       });
+      // 信任分变化后重算等级与配额
+      await this.users.recomputeLevelAndQuota(reply.writerId);
     }
     return { ok: true };
   }

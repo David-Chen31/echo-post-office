@@ -54,6 +54,14 @@ export class ClaimService {
     const blockExpr = blockedIds.length ? blockedIds : [BigInt(0)];
     const excludeExpr = skipped.length ? skipped.map((s) => BigInt(s)) : [BigInt(0)];
 
+    // 读者感兴趣主题：优先分配匹配的信，但以最老待领取为兜底次序，避免非偏好主题饥饿。
+    const me = await this.prisma.user.findUnique({
+      where: { id: readerId },
+      select: { interestedTopics: true },
+    });
+    const topics = Array.isArray(me?.interestedTopics) ? (me!.interestedTopics as string[]) : [];
+    const topicExpr = topics.length ? topics : [''];
+
     const rows = await this.prisma.$queryRaw<{ id: bigint }[]>(Prisma.sql`
       SELECT l."id"
       FROM "letters" l
@@ -70,7 +78,7 @@ export class ClaimService {
           SELECT count(*) FROM "letter_claims" c2
           WHERE c2."letterId" = l."id" AND c2."status" IN ('CLAIMED'::"ClaimStatus", 'REPLIED'::"ClaimStatus")
         ) < l."maxReplies"
-      ORDER BY l."publishedAt" ASC NULLS LAST
+      ORDER BY (l."category"::text = ANY(${topicExpr}::text[])) DESC, l."publishedAt" ASC NULLS LAST
       LIMIT 1
     `);
     if (rows.length === 0) return null;

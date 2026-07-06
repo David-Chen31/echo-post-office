@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { AccountType, ApiCode, LoginDto, RegisterDto, SendCodeDto } from '@letter/shared';
 import { PrismaService } from '../../infra/prisma/prisma.service';
@@ -98,21 +99,57 @@ export class AuthService {
     return role === 'admin' || role === 'moderator' ? role : 'user';
   }
 
+  private revokedKey(jti: string): string {
+    return `revoked:rt:${jti}`;
+  }
+
+  /**
+   * 刷新令牌：校验 → 查黑名单 → 重读用户（角色/封禁生效）→ 轮换（作废旧 jti，签发新令牌）。
+   */
   async refresh(refreshToken: string): Promise<TokenPair> {
+    let payload: { sub: string; role: AppRole; jti?: string };
     try {
-      const payload = await this.jwt.verifyAsync<{ sub: string; role: AppRole }>(refreshToken, {
+      payload = await this.jwt.verifyAsync(refreshToken, {
         secret: this.config.get<string>('JWT_REFRESH_SECRET'),
       });
-      return this.issueTokens(BigInt(payload.sub), payload.role ?? 'user');
     } catch {
       throw new BusinessException(ApiCode.UNAUTHORIZED, '登录已失效，请重新登录');
     }
+    if (payload.jti && (await this.redis.get(this.revokedKey(payload.jti)))) {
+      throw new BusinessException(ApiCode.UNAUTHORIZED, '登录已失效，请重新登录');
+    }
+    const user = await this.prisma.user.findUnique({ where: { id: BigInt(payload.sub) } });
+    if (!user || user.status === 'DELETED' || user.status === 'BANNED') {
+      throw new BusinessException(ApiCode.FORBIDDEN, '账号不可用');
+    }
+    // 轮换：作废旧 refresh
+    if (payload.jti) {
+      await this.redis.setEx(
+        this.revokedKey(payload.jti),
+        '1',
+        Number(this.config.get<string>('JWT_REFRESH_TTL', '2592000')),
+      );
+    }
+    return this.issueTokens(user.id, this.normalizeRole(user.role));
   }
 
-  async logout(userId: bigint): Promise<void> {
-    // MVP：无服务端会话黑名单；客户端清除 cookie 即可。
-    // 预留：可在此把 refresh jti 加入 redis 黑名单。
-    void userId;
+  /** 登出：把当前 refresh 令牌加入黑名单，使其立即失效。 */
+  async logout(refreshToken?: string): Promise<void> {
+    if (!refreshToken) return;
+    try {
+      const payload = await this.jwt.verifyAsync<{ jti?: string }>(refreshToken, {
+        secret: this.config.get<string>('JWT_REFRESH_SECRET'),
+      });
+      if (payload.jti) {
+        await this.redis.setEx(
+          this.revokedKey(payload.jti),
+          '1',
+          Number(this.config.get<string>('JWT_REFRESH_TTL', '2592000')),
+        );
+      }
+    } catch {
+      /* 令牌已无效，忽略 */
+    }
   }
 
   private async issueTokens(userId: bigint, role: AppRole): Promise<TokenPair> {
@@ -125,7 +162,7 @@ export class AuthService {
       },
     );
     const refreshToken = await this.jwt.signAsync(
-      { sub, role },
+      { sub, role, jti: randomUUID() },
       {
         secret: this.config.get<string>('JWT_REFRESH_SECRET'),
         expiresIn: Number(this.config.get<string>('JWT_REFRESH_TTL', '2592000')),

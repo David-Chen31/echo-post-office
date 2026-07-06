@@ -1,5 +1,5 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Request, Response } from 'express';
 import {
   loginSchema,
   registerSchema,
@@ -14,7 +14,6 @@ import { AuthService, TokenPair } from './auth.service';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { Public } from '../../common/decorators/public.decorator';
 import { RateLimit } from '../../common/decorators/rate-limit.decorator';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -60,10 +59,11 @@ export class AuthController {
 
   @Post('logout')
   async logout(
-    @CurrentUser('userId') userId: bigint,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ ok: boolean }> {
-    await this.auth.logout(userId);
+    const rt = (req as Request & { cookies?: Record<string, string> }).cookies?.refresh_token;
+    await this.auth.logout(rt);
     res.clearCookie('access_token');
     res.clearCookie('refresh_token');
     return { ok: true };
