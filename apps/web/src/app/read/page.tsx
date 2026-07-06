@@ -89,11 +89,15 @@ export default function ReadPage() {
       ) : (
         <motion.div
           key={letter.letterId}
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, y: 20, scaleY: 0.97 }}
+          animate={{ opacity: 1, y: 0, scaleY: 1 }}
+          transition={{ duration: 0.55, ease: 'easeOut' }}
+          className="origin-top"
         >
-          <div className="mt-4 mb-3 text-right font-ui text-[12px] text-ink2">{letter.fuzzyTime}</div>
+          <div className="mt-4 mb-3 flex items-center justify-between font-ui text-[12px] text-ink2">
+            <span>你从待回信箱里取出了一封信</span>
+            <span>{letter.fuzzyTime}</span>
+          </div>
 
           {letter.title && <h2 className="mb-2 font-hand text-[22px] text-ink">{letter.title}</h2>}
 

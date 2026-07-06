@@ -102,32 +102,30 @@ export default function ReceivedPage() {
             <p className="mt-4 text-right font-hand text-[16px] text-ink2">—— 一个认真读过你信的人</p>
           </LetterPaper>
 
-          {/* 阅读后的克制反馈（不公开、不计分展示） */}
-          <div className="mt-6">
-            <p className="mb-3 text-center font-ui text-[12px] text-ink2">读完之后，你的感受是——</p>
-            <div className="flex flex-wrap justify-center gap-2">
+          {/* 读完轻轻放下：用安静的文字而非评分药丸 */}
+          <div className="mt-8 border-t border-line/60 pt-5">
+            <p className="mb-3 text-center font-ui text-[12px] text-ink2">读完之后，你想轻轻说一句——</p>
+            <div className="flex flex-wrap justify-center gap-x-5 gap-y-2">
               {FEEDBACKS.map((f) => (
                 <button
                   key={f.type}
                   onClick={() => feedback(f.type)}
                   disabled={!!gave}
-                  className={`rounded-full border px-3 py-1.5 font-ui text-[13px] transition-colors ${
-                    gave === f.type
-                      ? 'border-stamp bg-stamp text-letter'
-                      : 'border-line bg-letter text-ink2 hover:text-ink disabled:opacity-50'
+                  className={`font-ui text-[13px] underline-offset-4 transition-colors disabled:opacity-45 ${
+                    gave === f.type ? 'text-stamp underline' : 'text-ink2 hover:text-ink'
                   }`}
                 >
                   {f.label}
                 </button>
               ))}
             </div>
-            <div className="mt-5 flex justify-center">
+            <div className="mt-6 flex justify-center">
               <button
                 onClick={favorite}
                 disabled={favorited}
-                className="btn-ghost"
+                className="font-ui text-[13px] text-ink2 underline-offset-4 hover:text-stamp disabled:opacity-45"
               >
-                {favorited ? '已收藏 ♥' : '收藏这封回信'}
+                {favorited ? '已夹进收藏 ♥' : '把这封回信夹起来收藏'}
               </button>
             </div>
           </div>
