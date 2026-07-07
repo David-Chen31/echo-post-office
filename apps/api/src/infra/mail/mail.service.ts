@@ -15,8 +15,10 @@ export class MailService {
   private transporter: nodemailer.Transporter | null = null;
 
   constructor(private readonly config: ConfigService) {
-    this.driver = this.config.get<string>('MAIL_DRIVER', 'console');
+    // 归一化：容忍 "SMTP" / " smtp " 之类的大小写与空格，避免因值不完全等于 'smtp' 而静默回退到 console
+    this.driver = (this.config.get<string>('MAIL_DRIVER', 'console') || 'console').trim().toLowerCase();
     this.from = this.config.get<string>('MAIL_FROM', '回声邮局 <no-reply@localhost>');
+    this.logger.log(`MailService 启动，driver=${this.driver}`);
   }
 
   private getTransport(): nodemailer.Transporter {
@@ -39,6 +41,8 @@ export class MailService {
 
   private async deliver(to: string, subject: string, text: string, consoleLine: string): Promise<void> {
     if (this.driver !== 'smtp') {
+      // 没走 SMTP：把实际读到的 driver 值打出来，方便定位是不是环境变量没生效
+      this.logger.warn(`MAIL_DRIVER=${this.driver}（非 smtp），未真正发信，仅打印到日志`);
       this.logger.log(consoleLine);
       return;
     }
