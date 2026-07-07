@@ -89,10 +89,11 @@ export class UserService {
     let level: UserLevel;
     let claimQuota: number;
     let writeQuota: number;
+    // 每日投信统一上限为 2 封（信任分只影响领取额度，不再放宽写信额度）
     if (s >= 200) {
       level = UserLevel.KEEPER;
       claimQuota = 10;
-      writeQuota = 3;
+      writeQuota = 2;
     } else if (s >= 120) {
       level = UserLevel.REPLIER;
       claimQuota = 5;
@@ -104,7 +105,7 @@ export class UserService {
     } else {
       level = UserLevel.NEWCOMER;
       claimQuota = 2;
-      writeQuota = 1;
+      writeQuota = 2;
     }
     if (level !== user.level || claimQuota !== user.dailyClaimQuota || writeQuota !== user.dailyWriteQuota) {
       await this.prisma.user.update({

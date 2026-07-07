@@ -102,6 +102,8 @@ export class LetterService {
 
     const updated = await this.prisma.letter.update({ where: { id: letter.id }, data });
     await this.consumeWriteQuota(userId);
+    // 信已寄出：清掉服务端草稿，避免已投递的信仍留在"草稿"里
+    await this.prisma.letterDraft.deleteMany({ where: { userId } });
     return toOwnerView(updated);
   }
 

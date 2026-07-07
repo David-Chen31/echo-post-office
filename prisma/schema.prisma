@@ -186,7 +186,7 @@ model User {
   trustScore       Int         @default(100)
   interestedTopics Json        @default("[]")
   blockedTopics    Json        @default("[]")
-  dailyWriteQuota  Int         @default(1)
+  dailyWriteQuota  Int         @default(2)
   dailyClaimQuota  Int         @default(2)
   isSeed           Boolean     @default(false)
   createdAt        DateTime    @default(now())

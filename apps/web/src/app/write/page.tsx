@@ -48,6 +48,8 @@ export default function WritePage() {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  // 寄信失败的常驻提示（如今日额度用完），留在按钮上方直到用户继续修改
+  const [blockMsg, setBlockMsg] = useState<string | null>(null);
   const [prompt] = useState(() => PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
   const [crisisText, setCrisisText] = useState('');
   const [showCrisis, setShowCrisis] = useState(false);
@@ -150,7 +152,9 @@ export default function WritePage() {
       localStorage.removeItem('letter-draft');
       router.push('/write/sent');
     } catch (e) {
-      notify(e instanceof ApiError ? e.message : '投递失败，请稍后再试');
+      const msg = e instanceof ApiError ? e.message : '投递失败，请稍后再试';
+      setBlockMsg(msg);
+      notify(msg);
       setSubmitting(false);
     }
   };
@@ -181,6 +185,7 @@ export default function WritePage() {
             onChange={(e) => {
               setContent(e.target.value);
               markWriting();
+              if (blockMsg) setBlockMsg(null);
             }}
             onKeyDown={handleTab}
             autoFocus
@@ -213,6 +218,9 @@ export default function WritePage() {
       {/* 封信按钮 */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 px-5 py-3 backdrop-blur">
         <div className="mx-auto max-w-[820px]">
+          {blockMsg && (
+            <p className="mb-2 text-center font-ui text-[12.5px] leading-relaxed text-stamp">{blockMsg}</p>
+          )}
           <button className="btn-primary w-full py-3.5" disabled={submitting} onClick={submit}>
             {submitting ? '正在封好信件…' : '封好信件'}
           </button>

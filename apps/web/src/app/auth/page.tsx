@@ -114,7 +114,7 @@ function AuthInner() {
           </button>
         </div>
         <button className="btn-primary mt-2 w-full py-3.5" disabled={submitting} onClick={submit}>
-          {mode === 'login' ? '进入邮局' : '注册，进来'}
+          {mode === 'login' ? '进入邮局' : '注册'}
         </button>
       </div>
 
